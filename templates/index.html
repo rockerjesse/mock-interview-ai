@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mock Interview Chat</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --container-bg: #1e1e1e;
+            --ai-bg: #263238;
+            --user-bg: #2e7d32;
+            --input-bg: #2c2c2c;
+            --btn-bg: #1976d2;
+            --btn-hover: #1565c0;
+            --upload-btn-bg: #424242;
+            --upload-btn-hover: #616161;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        #chat-container {
+            max-width: 600px;
+            margin: 2rem auto;
+            background-color: var(--container-bg);
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+            padding: 1rem;
+            display: none;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        #chat-container.show {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        h2 {
+            color: var(--btn-bg);
+        }
+
+        .message {
+            margin-bottom: 1rem;
+            animation: fadeInUp 0.4s ease both;
+        }
+
+        .ai {
+            background-color: var(--ai-bg);
+            padding: 0.5rem;
+            border-radius: 6px;
+        }
+
+        .user {
+            background-color: var(--user-bg);
+            padding: 0.5rem;
+            border-radius: 6px;
+            text-align: right;
+        }
+
+        #input-form {
+            display: flex;
+            margin-top: 1rem;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        #message-input {
+            flex: 1;
+            padding: 0.5rem;
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            border: 1px solid #444;
+            border-radius: 6px;
+        }
+
+        .mic-button {
+            background-color: #555;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            padding: 0.3rem 0.6rem;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+
+        .mic-button.active {
+            background-color: crimson;
+            animation: pulse 1.2s infinite;
+        }
+
+        #mic-timer {
+            font-size: 0.9rem;
+            margin-left: 0.5rem;
+            color: var(--text-color);
+            opacity: 0.75;
+            min-width: 45px;
+        }
+
+        #input-form button[type="submit"] {
+            background-color: var(--btn-bg);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+        }
+
+        #input-form button[type="submit"]:hover {
+            background-color: var(--btn-hover);
+        }
+
+        #upload-section {
+            max-width: 600px;
+            margin: 4rem auto;
+            text-align: center;
+        }
+
+        #upload-form {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        #upload-form input[type="file"] {
+            font-size: 1rem;
+            padding: 0.5rem;
+            border-radius: 6px;
+            border: 1px solid #888;
+            background-color: var(--container-bg);
+            color: var(--text-color);
+        }
+
+        #upload-form button {
+            font-size: 1rem;
+            padding: 0.6rem 1.2rem;
+            background-color: var(--upload-btn-bg);
+            color: var(--text-color);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        #upload-form button:hover {
+            background-color: var(--upload-btn-hover);
+        }
+
+        #start-section {
+            text-align: center;
+            margin-top: 2rem;
+            display: none;
+        }
+
+        #start-btn {
+            font-size: 1.1rem;
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--btn-bg);
+            color: white;
+            cursor: pointer;
+        }
+
+        #start-btn:hover {
+            background-color: var(--btn-hover);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(220, 20, 60, 0.5);
+            }
+            70% {
+                box-shadow: 0 0 0 12px rgba(220, 20, 60, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(220, 20, 60, 0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="upload-section">
+        <h2>🎤 AI Interview Chat</h2>
+        <form id="upload-form" enctype="multipart/form-data">
+            <input type="file" name="resume" required />
+            <button type="submit">Upload Resume</button>
+        </form>
+    </div>
+
+    <div id="start-section">
+        <button id="start-btn">Start Interview</button>
+    </div>
+
+    <div id="chat-container">
+        <div id="chat-log"></div>
+        <form id="input-form">
+            <input type="text" id="message-input" placeholder="Type your answer..." autocomplete="off" disabled />
+            <button type="button" class="mic-button" id="micBtn" title="Click to speak">🎙</button>
+            <span id="mic-timer" style="display:none;">00:00</span>
+            <button type="submit" disabled>Send</button>
+        </form>
+    </div>
+
+    <script>
+        const chatLog = document.getElementById("chat-log");
+        const inputForm = document.getElementById("input-form");
+        const messageInput = document.getElementById("message-input");
+        const uploadForm = document.getElementById("upload-form");
+        const chatContainer = document.getElementById("chat-container");
+        const uploadSection = document.getElementById("upload-section");
+        const startSection = document.getElementById("start-section");
+        const startBtn = document.getElementById("start-btn");
+        const sendBtn = inputForm.querySelector("button[type='submit']");
+        const micBtn = document.getElementById("micBtn");
+        const micTimer = document.getElementById("mic-timer");
+
+        let initialInterviewData = null;
+
+        uploadForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData(uploadForm);
+            const res = await fetch("/upload", {
+                method: "POST",
+                body: formData
+            });
+            const data = await res.json();
+            initialInterviewData = data;
+            startSection.style.display = "block";
+            uploadSection.style.display = "none";
+        };
+
+        startBtn.onclick = () => {
+            if (!initialInterviewData) return;
+            const data = initialInterviewData;
+            const textToSpeak = `You're applying for a ${data.job_title} position. ${stripHtml(data.question)}`;
+            addMessage("ai", `You're applying for a <strong>${data.job_title}</strong> position. Let's begin!${data.question}`);
+            speakText(textToSpeak);
+
+            messageInput.disabled = false;
+            sendBtn.disabled = false;
+            chatContainer.classList.add("show");
+            startSection.style.display = "none";
+        };
+
+        inputForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const userMessage = messageInput.value;
+            if (!userMessage.trim()) return;
+
+            addMessage("user", userMessage);
+            messageInput.value = "";
+
+            const res = await fetch("/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: userMessage })
+            });
+            const data = await res.json();
+            addMessage("ai", data.feedback);
+            speakText(stripHtml(data.feedback));
+        };
+
+        function addMessage(sender, text) {
+            const div = document.createElement("div");
+            div.className = `message ${sender}`;
+            div.innerHTML = text.replace(/\n/g, "<br>");
+            chatLog.appendChild(div);
+            chatLog.scrollTop = chatLog.scrollHeight;
+        }
+
+        async function speakText(text) {
+            const res = await fetch("/speak", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text })
+            });
+            if (!res.ok) return;
+            const blob = await res.blob();
+            const audio = new Audio(URL.createObjectURL(blob));
+            audio.play();
+        }
+
+        function stripHtml(html) {
+            let div = document.createElement("div");
+            div.innerHTML = html;
+            return div.textContent || div.innerText || "";
+        }
+
+        // 🎙 Voice-to-Text with pause timeout and appending
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition, timerInterval, seconds = 0, silenceTimeout;
+
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.lang = "en-US";
+            recognition.interimResults = false;
+
+            micBtn.addEventListener("click", () => {
+                if (micBtn.classList.contains("active")) {
+                    recognition.stop();
+                } else {
+                    recognition.start();
+                }
+            });
+
+            recognition.addEventListener("start", () => {
+                micBtn.classList.add("active");
+                micBtn.textContent = "🛑";
+                micTimer.style.display = "inline";
+                seconds = 0;
+                updateTimer();
+                timerInterval = setInterval(() => {
+                    seconds++;
+                    updateTimer();
+                }, 1000);
+            });
+
+            recognition.addEventListener("end", () => {
+                micBtn.classList.remove("active");
+                micBtn.textContent = "🎙";
+                micTimer.style.display = "none";
+                clearInterval(timerInterval);
+                clearTimeout(silenceTimeout);
+            });
+
+            recognition.addEventListener("result", (event) => {
+                const transcript = event.results[event.results.length - 1][0].transcript;
+                messageInput.value += (messageInput.value ? " " : "") + transcript;
+                clearTimeout(silenceTimeout);
+                silenceTimeout = setTimeout(() => recognition.stop(), 5000);
+            });
+
+            function updateTimer() {
+                const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
+                const secs = String(seconds % 60).padStart(2, '0');
+                micTimer.textContent = `${mins}:${secs}`;
+            }
+        } else {
+            micBtn.disabled = true;
+            micBtn.textContent = "❌";
+        }
+    </script>
+</body>
+</html>
