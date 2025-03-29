@@ -174,6 +174,17 @@
             background-color: var(--btn-hover);
         }
 
+        /* Job Title Section */
+        #job-title-section {
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        #job-title-input {
+            display: none;
+            margin-top: 0.5rem;
+        }
+
         @keyframes fadeInUp {
             from {
                 opacity: 0;
@@ -207,6 +218,16 @@
         </form>
     </div>
 
+    <!-- Job Title Selection -->
+    <div id="job-title-section">
+        <label for="job-title-select">Choose Job Title:</label>
+        <select id="job-title-select" name="job-title-select">
+            <option value="ai">Let AI Select</option>
+            <option value="manual">Enter Manually</option>
+        </select>
+        <input type="text" id="job-title-input" placeholder="Enter job title" />
+    </div>
+
     <div id="start-section">
         <button id="start-btn">Start Interview</button>
     </div>
@@ -222,62 +243,55 @@
     </div>
 
     <script>
-        const chatLog = document.getElementById("chat-log");
-        const inputForm = document.getElementById("input-form");
-        const messageInput = document.getElementById("message-input");
-        const uploadForm = document.getElementById("upload-form");
-        const chatContainer = document.getElementById("chat-container");
-        const uploadSection = document.getElementById("upload-section");
-        const startSection = document.getElementById("start-section");
+        const jobTitleSelect = document.getElementById('job-title-select');
+        const jobTitleInput = document.getElementById('job-title-input');
         const startBtn = document.getElementById("start-btn");
-        const sendBtn = inputForm.querySelector("button[type='submit']");
-        const micBtn = document.getElementById("micBtn");
-        const micTimer = document.getElementById("mic-timer");
+        const uploadForm = document.getElementById("upload-form");
+        const startSection = document.getElementById("start-section");
+        const uploadSection = document.getElementById("upload-section");
 
-        let initialInterviewData = null;
+        // Toggle job title input
+        jobTitleSelect.addEventListener('change', function() {
+            if (this.value === 'manual') {
+                jobTitleInput.style.display = 'inline-block';
+            } else {
+                jobTitleInput.style.display = 'none';
+            }
+        });
 
         uploadForm.onsubmit = async (e) => {
             e.preventDefault();
+            const jobTitle = jobTitleSelect.value === 'manual' ? jobTitleInput.value : 'ai';
+            const jobTitleField = document.createElement("input");
+            jobTitleField.type = "hidden";
+            jobTitleField.name = "job-title";
+            jobTitleField.value = jobTitle;
+            uploadForm.appendChild(jobTitleField);
+
             const formData = new FormData(uploadForm);
             const res = await fetch("/upload", {
                 method: "POST",
                 body: formData
             });
             const data = await res.json();
-            initialInterviewData = data;
             startSection.style.display = "block";
             uploadSection.style.display = "none";
         };
 
         startBtn.onclick = () => {
             if (!initialInterviewData) return;
+
             const data = initialInterviewData;
-            const textToSpeak = `You're applying for a ${data.job_title} position. ${stripHtml(data.question)}`;
             addMessage("ai", `You're applying for a <strong>${data.job_title}</strong> position. Let's begin!${data.question}`);
-            speakText(textToSpeak);
+            if (data.tts_url) {
+                const audio = new Audio(data.tts_url);
+                audio.play();
+            }
 
             messageInput.disabled = false;
             sendBtn.disabled = false;
             chatContainer.classList.add("show");
             startSection.style.display = "none";
-        };
-
-        inputForm.onsubmit = async (e) => {
-            e.preventDefault();
-            const userMessage = messageInput.value;
-            if (!userMessage.trim()) return;
-
-            addMessage("user", userMessage);
-            messageInput.value = "";
-
-            const res = await fetch("/chat", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: userMessage })
-            });
-            const data = await res.json();
-            addMessage("ai", data.feedback);
-            speakText(stripHtml(data.feedback));
         };
 
         function addMessage(sender, text) {
@@ -286,79 +300,6 @@
             div.innerHTML = text.replace(/\n/g, "<br>");
             chatLog.appendChild(div);
             chatLog.scrollTop = chatLog.scrollHeight;
-        }
-
-        async function speakText(text) {
-            const res = await fetch("/speak", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text })
-            });
-            if (!res.ok) return;
-            const blob = await res.blob();
-            const audio = new Audio(URL.createObjectURL(blob));
-            audio.play();
-        }
-
-        function stripHtml(html) {
-            let div = document.createElement("div");
-            div.innerHTML = html;
-            return div.textContent || div.innerText || "";
-        }
-
-        // 🎙 Voice-to-Text with pause timeout and appending
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        let recognition, timerInterval, seconds = 0, silenceTimeout;
-
-        if (SpeechRecognition) {
-            recognition = new SpeechRecognition();
-            recognition.continuous = true;
-            recognition.lang = "en-US";
-            recognition.interimResults = false;
-
-            micBtn.addEventListener("click", () => {
-                if (micBtn.classList.contains("active")) {
-                    recognition.stop();
-                } else {
-                    recognition.start();
-                }
-            });
-
-            recognition.addEventListener("start", () => {
-                micBtn.classList.add("active");
-                micBtn.textContent = "🛑";
-                micTimer.style.display = "inline";
-                seconds = 0;
-                updateTimer();
-                timerInterval = setInterval(() => {
-                    seconds++;
-                    updateTimer();
-                }, 1000);
-            });
-
-            recognition.addEventListener("end", () => {
-                micBtn.classList.remove("active");
-                micBtn.textContent = "🎙";
-                micTimer.style.display = "none";
-                clearInterval(timerInterval);
-                clearTimeout(silenceTimeout);
-            });
-
-            recognition.addEventListener("result", (event) => {
-                const transcript = event.results[event.results.length - 1][0].transcript;
-                messageInput.value += (messageInput.value ? " " : "") + transcript;
-                clearTimeout(silenceTimeout);
-                silenceTimeout = setTimeout(() => recognition.stop(), 5000);
-            });
-
-            function updateTimer() {
-                const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
-                const secs = String(seconds % 60).padStart(2, '0');
-                micTimer.textContent = `${mins}:${secs}`;
-            }
-        } else {
-            micBtn.disabled = true;
-            micBtn.textContent = "❌";
         }
     </script>
 </body>

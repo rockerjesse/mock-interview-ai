@@ -57,6 +57,8 @@ def upload():
     delete_old_files(app.config['UPLOAD_FOLDER'])
 
     file = request.files["resume"]
+    job_title = request.form.get("job-title", None)  # Retrieve the job title chosen by the user
+
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
@@ -71,7 +73,10 @@ def upload():
             return response
 
         resume_text = load_resume(path)
-        job_title = guess_job_title(resume_text)
+
+        if job_title == "ai" or not job_title:  # Use AI to select job title if none provided
+            job_title = guess_job_title(resume_text)
+
         question = ask_interview_question(resume_text, job_title, [])
 
         user_data.update({
