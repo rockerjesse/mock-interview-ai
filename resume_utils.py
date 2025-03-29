@@ -59,16 +59,13 @@ Be specific but realistic. Return only the job title.
 
 def ask_interview_question(resume_text, job_title, previous_questions):
     system_prompt = f"""
-You are a professional recruiter conducting a mock interview for the role of **{job_title}**.
+You are a professional recruiter conducting a mock interview for the position of "{job_title}".
 
-⚠️ VERY IMPORTANT: The candidate is applying for this role intentionally, even if their resume is from a different field. Do not default to past experience. They are serious about transitioning.
+The candidate has submitted the following resume. The resume may not directly match the job title, if-so assume they are transitioning or exploring new roles.
 
-🎯 Your task is to generate one clear, specific, and relevant interview question for a **{job_title}** role. You may refer to their resume only to customize or personalize the question, but the question MUST relate to the **{job_title}** position.
+Your goal is to ask a specific, realistic, and job-relevant interview question for a candidate applying to this position—even if their background is in a different field.
 
-⛔ Do NOT ask generic behavioral questions unless they clearly apply to the desired role.
-⛔ Do NOT explain or repeat anything. Only return the question itself.
-
-✅ Assume they are changing careers and are qualified enough to have reached the interview.
+Do NOT list multiple questions. Do NOT explain anything. Only return a single interview question.
 
 Avoid repeating these previous questions:
 {chr(10).join(previous_questions)}
@@ -82,7 +79,6 @@ Avoid repeating these previous questions:
         temperature=0.7
     )
     return response.choices[0].message.content.strip()
-
 
 def get_feedback(question, answer, resume_text, job_title):
     prompt = f"""
