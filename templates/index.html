@@ -22,6 +22,7 @@
             padding: 0;
             background-color: var(--bg-color);
             color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
         }
 
         #chat-container {
@@ -173,6 +174,7 @@
             background-color: var(--btn-hover);
         }
 
+        /* Job Title Section */
         #job-title-section {
             text-align: center;
             margin-top: 1rem;
@@ -216,6 +218,7 @@
         </form>
     </div>
 
+    <!-- Job Title Selection -->
     <div id="job-title-section">
         <label for="job-title-select">Choose Job Title:</label>
         <select id="job-title-select" name="job-title-select">
@@ -246,13 +249,8 @@
         const uploadForm = document.getElementById("upload-form");
         const startSection = document.getElementById("start-section");
         const uploadSection = document.getElementById("upload-section");
-        const chatContainer = document.getElementById("chat-container");
-        const chatLog = document.getElementById("chat-log");
-        const messageInput = document.getElementById("message-input");
-        const sendBtn = document.querySelector("#input-form button[type='submit']");
 
-        let initialInterviewData = null;
-
+        // Toggle job title input
         jobTitleSelect.addEventListener('change', function() {
             if (this.value === 'manual') {
                 jobTitleInput.style.display = 'inline-block';
@@ -263,20 +261,7 @@
 
         uploadForm.onsubmit = async (e) => {
             e.preventDefault();
-
-            // Remove any existing hidden job title field
-            const existingHidden = uploadForm.querySelector("input[name='job-title']");
-            if (existingHidden) existingHidden.remove();
-
-            let jobTitle = "ai";
-            if (jobTitleSelect.value === "manual") {
-                if (jobTitleInput.value.trim() === "") {
-                    alert("Please enter a job title.");
-                    return;
-                }
-                jobTitle = jobTitleInput.value.trim();
-            }
-
+            const jobTitle = jobTitleSelect.value === 'manual' ? jobTitleInput.value : 'ai';
             const jobTitleField = document.createElement("input");
             jobTitleField.type = "hidden";
             jobTitleField.name = "job-title";
@@ -289,7 +274,6 @@
                 body: formData
             });
             const data = await res.json();
-            initialInterviewData = data;
             startSection.style.display = "block";
             uploadSection.style.display = "none";
         };
