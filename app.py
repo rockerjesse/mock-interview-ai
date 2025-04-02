@@ -147,7 +147,7 @@ Return only the follow-up question itself, with no extra explanation.
             "feedback": " Interview complete. Refresh the page to try another resume."
         })
 
-# 🔊 TEXT TO SPEECH ENDPOINT
+# TEXT TO SPEECH ENDPOINT
 @app.route("/speak", methods=["POST"])
 def speak():
     text = request.json.get("text")
