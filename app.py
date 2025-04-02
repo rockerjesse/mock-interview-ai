@@ -109,9 +109,9 @@ With:
 
 Now ask one clear and realistic follow-up question based on their answer and resume.
 
-❌ Do NOT repeat the original question.
-❌ Do NOT list multiple options.
-✅ Return only the follow-up question itself, with no extra explanation.
+Do NOT repeat the original question.
+Do NOT list multiple options.
+Return only the follow-up question itself, with no extra explanation.
 
 --- Resume ---
 {resume_text}
@@ -144,7 +144,7 @@ Now ask one clear and realistic follow-up question based on their answer and res
 
     else:
         return jsonify({
-            "feedback": "✅ Interview complete. Refresh the page to try another resume."
+            "feedback": " Interview complete. Refresh the page to try another resume."
         })
 
 # 🔊 TEXT TO SPEECH ENDPOINT
