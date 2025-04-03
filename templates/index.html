@@ -174,6 +174,32 @@
             background-color: var(--btn-hover);
         }
 
+        /* New styles for job title selection */
+        #job-title-section {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        #job-title-input {
+            display: none;
+        }
+
+        #job-title-select {
+            background-color: var(--btn-bg);
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        #job-title-select:disabled {
+            background-color: #888;
+            cursor: not-allowed;
+        }
+
         @keyframes fadeInUp {
             from {
                 opacity: 0;
@@ -207,6 +233,12 @@
         </form>
     </div>
 
+    <!-- New Section for Job Title Selection -->
+    <div id="job-title-section">
+        <button id="job-title-select">Let AI Select Job Title</button>
+        <input type="text" id="job-title-input" placeholder="Enter Job Title" disabled />
+    </div>
+
     <div id="start-section">
         <button id="start-btn">Start Interview</button>
     </div>
@@ -234,8 +266,12 @@
         const micBtn = document.getElementById("micBtn");
         const micTimer = document.getElementById("mic-timer");
 
+        const jobTitleSelect = document.getElementById("job-title-select");
+        const jobTitleInput = document.getElementById("job-title-input");
+
         let initialInterviewData = null;
 
+        // When the user uploads their resume
         uploadForm.onsubmit = async (e) => {
             e.preventDefault();
             const formData = new FormData(uploadForm);
@@ -249,12 +285,14 @@
             uploadSection.style.display = "none";
         };
 
+        // When the user clicks "Start Interview"
         startBtn.onclick = () => {
             if (!initialInterviewData) return;
+
             const data = initialInterviewData;
-            const textToSpeak = `You're applying for a ${data.job_title} position. ${stripHtml(data.question)}`;
             addMessage("ai", `You're applying for a <strong>${data.job_title}</strong> position. Let's begin!${data.question}`);
-            speakText(textToSpeak);
+
+            speakText(stripHtml(data.question));
 
             messageInput.disabled = false;
             sendBtn.disabled = false;
@@ -262,6 +300,7 @@
             startSection.style.display = "none";
         };
 
+        // Handles the chat message input
         inputForm.onsubmit = async (e) => {
             e.preventDefault();
             const userMessage = messageInput.value;
@@ -300,66 +339,19 @@
             audio.play();
         }
 
+        // Utility function to strip HTML tags
         function stripHtml(html) {
             let div = document.createElement("div");
             div.innerHTML = html;
             return div.textContent || div.innerText || "";
         }
 
-        // 🎙 Voice-to-Text with pause timeout and appending
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        let recognition, timerInterval, seconds = 0, silenceTimeout;
-
-        if (SpeechRecognition) {
-            recognition = new SpeechRecognition();
-            recognition.continuous = true;
-            recognition.lang = "en-US";
-            recognition.interimResults = false;
-
-            micBtn.addEventListener("click", () => {
-                if (micBtn.classList.contains("active")) {
-                    recognition.stop();
-                } else {
-                    recognition.start();
-                }
-            });
-
-            recognition.addEventListener("start", () => {
-                micBtn.classList.add("active");
-                micBtn.textContent = "🛑";
-                micTimer.style.display = "inline";
-                seconds = 0;
-                updateTimer();
-                timerInterval = setInterval(() => {
-                    seconds++;
-                    updateTimer();
-                }, 1000);
-            });
-
-            recognition.addEventListener("end", () => {
-                micBtn.classList.remove("active");
-                micBtn.textContent = "🎙";
-                micTimer.style.display = "none";
-                clearInterval(timerInterval);
-                clearTimeout(silenceTimeout);
-            });
-
-            recognition.addEventListener("result", (event) => {
-                const transcript = event.results[event.results.length - 1][0].transcript;
-                messageInput.value += (messageInput.value ? " " : "") + transcript;
-                clearTimeout(silenceTimeout);
-                silenceTimeout = setTimeout(() => recognition.stop(), 5000);
-            });
-
-            function updateTimer() {
-                const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
-                const secs = String(seconds % 60).padStart(2, '0');
-                micTimer.textContent = `${mins}:${secs}`;
-            }
-        } else {
-            micBtn.disabled = true;
-            micBtn.textContent = "❌";
-        }
+        // Toggle between AI-selected job title or user input
+        jobTitleSelect.onclick = () => {
+            jobTitleInput.style.display = "block";
+            jobTitleSelect.disabled = true;
+            jobTitleInput.focus();
+        };
     </script>
 </body>
 </html>
