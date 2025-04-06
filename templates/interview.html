@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Mock Interview Chat</title>
+    <title>AI Interview Chat</title>
     <style>
         :root {
             --bg-color: #121212;
@@ -22,105 +22,15 @@
             padding: 0;
             background-color: var(--bg-color);
             color: var(--text-color);
-            transition: background-color 0.3s, color 0.3s;
-        }
-
-        #chat-container {
-            max-width: 600px;
-            margin: 2rem auto;
-            background-color: var(--container-bg);
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.3);
-            padding: 1rem;
-            display: none;
-            opacity: 0;
-            transform: translateY(20px);
-            transition: opacity 0.5s ease, transform 0.5s ease;
-        }
-
-        #chat-container.show {
-            display: block;
-            opacity: 1;
-            transform: translateY(0);
         }
 
         h2 {
             color: var(--btn-bg);
         }
 
-        .message {
-            margin-bottom: 1rem;
-            animation: fadeInUp 0.4s ease both;
-        }
-
-        .ai {
-            background-color: var(--ai-bg);
-            padding: 0.5rem;
-            border-radius: 6px;
-        }
-
-        .user {
-            background-color: var(--user-bg);
-            padding: 0.5rem;
-            border-radius: 6px;
-            text-align: right;
-        }
-
-        #input-form {
-            display: flex;
-            margin-top: 1rem;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        #message-input {
-            flex: 1;
-            padding: 0.5rem;
-            background-color: var(--input-bg);
-            color: var(--text-color);
-            border: 1px solid #444;
-            border-radius: 6px;
-        }
-
-        .mic-button {
-            background-color: #555;
-            border: none;
-            color: white;
-            font-size: 1.5rem;
-            padding: 0.3rem 0.6rem;
-            cursor: pointer;
-            border-radius: 6px;
-        }
-
-        .mic-button.active {
-            background-color: crimson;
-            animation: pulse 1.2s infinite;
-        }
-
-        #mic-timer {
-            font-size: 0.9rem;
-            margin-left: 0.5rem;
-            color: var(--text-color);
-            opacity: 0.75;
-            min-width: 45px;
-        }
-
-        #input-form button[type="submit"] {
-            background-color: var(--btn-bg);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            padding: 0.5rem 1rem;
-            cursor: pointer;
-        }
-
-        #input-form button[type="submit"]:hover {
-            background-color: var(--btn-hover);
-        }
-
-        #upload-section {
+        #upload-section, #start-section, #chat-container {
             max-width: 600px;
-            margin: 4rem auto;
+            margin: 2rem auto;
             text-align: center;
         }
 
@@ -154,10 +64,13 @@
             background-color: var(--upload-btn-hover);
         }
 
-        #start-section {
-            text-align: center;
-            margin-top: 2rem;
-            display: none;
+        #upload-form button:disabled,
+        #upload-form button[disabled]:hover {
+            background-color: #333 !important;
+            color: #888 !important;
+            cursor: not-allowed !important;
+            box-shadow: none;
+            opacity: 0.6;
         }
 
         #start-btn {
@@ -174,53 +87,127 @@
             background-color: var(--btn-hover);
         }
 
-        /* New styles for job title selection */
-        #job-title-section {
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-        }
-
-        #job-title-input {
+        #start-section {
             display: none;
         }
 
-        #job-title-select {
+        #chat-container {
+            background-color: var(--container-bg);
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            padding: 1rem;
+            display: none;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        #chat-container.show {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .message {
+            margin-bottom: 1rem;
+            text-align: left;
+        }
+
+        .ai {
+            background-color: var(--ai-bg);
+            padding: 0.5rem;
+            border-radius: 6px;
+        }
+
+        .user {
+            background-color: var(--user-bg);
+            padding: 0.5rem;
+            border-radius: 6px;
+            text-align: right;
+        }
+
+        #input-form {
+            display: flex;
+            margin-top: 1rem;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        #message-input {
+            flex: 1;
+            padding: 0.5rem;
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            border: 1px solid #444;
+            border-radius: 6px;
+        }
+
+        #input-form button[type="submit"] {
             background-color: var(--btn-bg);
             color: white;
-            padding: 0.5rem 1rem;
             border: none;
+            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+        }
+
+        #input-form button[type="submit"]:hover {
+            background-color: var(--btn-hover);
+        }
+
+        .mic-button {
+            background-color: #555;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            padding: 0.3rem 0.6rem;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+
+        .mic-button.active {
+            background-color: crimson;
+            animation: pulse 1.2s infinite;
+        }
+
+        #mic-timer {
+            font-size: 0.9rem;
+            margin-left: 0.5rem;
+            color: var(--text-color);
+            opacity: 0.75;
+            min-width: 45px;
+        }
+
+        .spinner {
+            font-size: 0.9rem;
+            margin-left: 0.5rem;
+            color: #aaa;
+        }
+
+        #audio-controls {
+            margin-top: 1rem;
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        #audio-controls button {
+            background-color: #333;
+            color: #fff;
+            border: none;
+            padding: 0.4rem 0.8rem;
             border-radius: 6px;
             cursor: pointer;
         }
 
-        #job-title-select:disabled {
-            background-color: #888;
-            cursor: not-allowed;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        #audio-controls button:hover {
+            background-color: #555;
         }
 
         @keyframes pulse {
-            0% {
-                box-shadow: 0 0 0 0 rgba(220, 20, 60, 0.5);
-            }
-            70% {
-                box-shadow: 0 0 0 12px rgba(220, 20, 60, 0);
-            }
-            100% {
-                box-shadow: 0 0 0 0 rgba(220, 20, 60, 0);
-            }
+            0% { box-shadow: 0 0 0 0 rgba(220, 20, 60, 0.5); }
+            70% { box-shadow: 0 0 0 12px rgba(220, 20, 60, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(220, 20, 60, 0); }
         }
     </style>
 </head>
@@ -229,14 +216,11 @@
         <h2>🎤 AI Interview Chat</h2>
         <form id="upload-form" enctype="multipart/form-data">
             <input type="file" name="resume" required />
-            <button type="submit">Upload Resume</button>
+            <button type="submit" id="upload-btn">
+                <span id="upload-text">Upload Resume</span>
+                <span id="upload-spinner" class="spinner" style="display: none;">⏳</span>
+            </button>
         </form>
-    </div>
-
-    <!-- New Section for Job Title Selection -->
-    <div id="job-title-section">
-        <button id="job-title-select">Let AI Select Job Title</button>
-        <input type="text" id="job-title-input" placeholder="Enter Job Title" disabled />
     </div>
 
     <div id="start-section">
@@ -251,6 +235,14 @@
             <span id="mic-timer" style="display:none;">00:00</span>
             <button type="submit" disabled>Send</button>
         </form>
+
+        <!-- New audio control buttons -->
+        <div id="audio-controls">
+            <button id="mute-btn">🔇 Mute</button>
+            <button id="pause-btn">⏸️ Pause</button>
+            <button id="resume-btn">▶️ Resume</button>
+            <button id="restart-btn">⏮️ Restart</button>
+        </div>
     </div>
 
     <script>
@@ -258,7 +250,6 @@
         const inputForm = document.getElementById("input-form");
         const messageInput = document.getElementById("message-input");
         const uploadForm = document.getElementById("upload-form");
-        const chatContainer = document.getElementById("chat-container");
         const uploadSection = document.getElementById("upload-section");
         const startSection = document.getElementById("start-section");
         const startBtn = document.getElementById("start-btn");
@@ -266,41 +257,55 @@
         const micBtn = document.getElementById("micBtn");
         const micTimer = document.getElementById("mic-timer");
 
-        const jobTitleSelect = document.getElementById("job-title-select");
-        const jobTitleInput = document.getElementById("job-title-input");
+        const uploadBtn = document.getElementById("upload-btn");
+        const uploadText = document.getElementById("upload-text");
+        const uploadSpinner = document.getElementById("upload-spinner");
 
+        const muteBtn = document.getElementById("mute-btn");
+        const pauseBtn = document.getElementById("pause-btn");
+        const resumeBtn = document.getElementById("resume-btn");
+        const restartBtn = document.getElementById("restart-btn");
+
+        let currentAudio = null;
         let initialInterviewData = null;
 
-        // When the user uploads their resume
         uploadForm.onsubmit = async (e) => {
             e.preventDefault();
+
+            uploadBtn.disabled = true;
+            uploadText.style.display = "none";
+            uploadSpinner.style.display = "inline";
+
             const formData = new FormData(uploadForm);
             const res = await fetch("/upload", {
                 method: "POST",
                 body: formData
             });
+
             const data = await res.json();
             initialInterviewData = data;
+
             startSection.style.display = "block";
             uploadSection.style.display = "none";
+
+            uploadBtn.disabled = false;
+            uploadText.style.display = "inline";
+            uploadSpinner.style.display = "none";
         };
 
-        // When the user clicks "Start Interview"
         startBtn.onclick = () => {
             if (!initialInterviewData) return;
 
             const data = initialInterviewData;
             addMessage("ai", `You're applying for a <strong>${data.job_title}</strong> position. Let's begin!${data.question}`);
-
             speakText(stripHtml(data.question));
 
             messageInput.disabled = false;
             sendBtn.disabled = false;
-            chatContainer.classList.add("show");
+            document.getElementById("chat-container").classList.add("show");
             startSection.style.display = "none";
         };
 
-        // Handles the chat message input
         inputForm.onsubmit = async (e) => {
             e.preventDefault();
             const userMessage = messageInput.value;
@@ -314,9 +319,57 @@
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ message: userMessage })
             });
+
             const data = await res.json();
             addMessage("ai", data.feedback);
             speakText(stripHtml(data.feedback));
+        };
+
+        async function speakText(text) {
+            if (currentAudio && !currentAudio.paused) {
+                currentAudio.pause();
+            }
+
+            const res = await fetch("/speak", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text })
+            });
+            if (!res.ok) return;
+
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            currentAudio = new Audio(url);
+            currentAudio.originalSrc = url;
+            currentAudio.play();
+        }
+
+        muteBtn.onclick = () => {
+            if (currentAudio) {
+                currentAudio.muted = !currentAudio.muted;
+                muteBtn.textContent = currentAudio.muted ? "🔈 Unmute" : "🔇 Mute";
+            }
+        };
+
+        pauseBtn.onclick = () => {
+            if (currentAudio && !currentAudio.paused) {
+                currentAudio.pause();
+            }
+        };
+
+        resumeBtn.onclick = () => {
+            if (currentAudio && currentAudio.paused) {
+                currentAudio.play();
+            }
+        };
+
+        restartBtn.onclick = () => {
+            if (currentAudio && currentAudio.originalSrc) {
+                const newAudio = new Audio(currentAudio.originalSrc);
+                currentAudio.pause();
+                currentAudio = newAudio;
+                currentAudio.play();
+            }
         };
 
         function addMessage(sender, text) {
@@ -327,31 +380,11 @@
             chatLog.scrollTop = chatLog.scrollHeight;
         }
 
-        async function speakText(text) {
-            const res = await fetch("/speak", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text })
-            });
-            if (!res.ok) return;
-            const blob = await res.blob();
-            const audio = new Audio(URL.createObjectURL(blob));
-            audio.play();
-        }
-
-        // Utility function to strip HTML tags
         function stripHtml(html) {
             let div = document.createElement("div");
             div.innerHTML = html;
             return div.textContent || div.innerText || "";
         }
-
-        // Toggle between AI-selected job title or user input
-        jobTitleSelect.onclick = () => {
-            jobTitleInput.style.display = "block";
-            jobTitleSelect.disabled = true;
-            jobTitleInput.focus();
-        };
     </script>
 </body>
 </html>
