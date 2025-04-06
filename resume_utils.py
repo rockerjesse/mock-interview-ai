@@ -1,14 +1,23 @@
-import openai
-import os
-import pdfplumber
-import docx
-from dotenv import load_dotenv
+# Import required libraries
+import openai                # To use the OpenAI GPT and TTS APIs
+import os                    # For handling file paths and environment variables
+import pdfplumber            # To read and extract text from PDF resumes
+import docx                  # To read Microsoft Word (.docx) resumes
+from dotenv import load_dotenv  # To load environment variables from a .env file
 
+# Load variables from .env file (like your OpenAI API key)
 load_dotenv()
+
+# Initialize the OpenAI client with your API key
 client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+# ------------------------------------------
+# Resume Uploading & Text Extraction
+# ------------------------------------------
+
+# Main function to extract text from the uploaded resume file
 def load_resume(path="resume.pdf"):
-    _, ext = os.path.splitext(path)
+    _, ext = os.path.splitext(path)  # Get file extension (e.g., .pdf, .docx)
     ext = ext.lower()
 
     if ext == ".pdf":
@@ -20,6 +29,7 @@ def load_resume(path="resume.pdf"):
     else:
         raise ValueError("Unsupported resume format. Use .pdf, .docx, or .txt")
 
+# Extract text from a PDF resume using pdfplumber
 def load_pdf(path):
     text = ""
     with pdfplumber.open(path) as pdf:
@@ -27,14 +37,21 @@ def load_pdf(path):
             text += page.extract_text() or ""
     return text.strip()
 
+# Extract text from a .docx (Word) resume
 def load_docx(path):
     doc = docx.Document(path)
     return "\n".join([para.text for para in doc.paragraphs]).strip()
 
+# Load plain text resume
 def load_txt(path):
     with open(path, "r", encoding="utf-8") as file:
         return file.read().strip()
 
+# ------------------------------------------
+# AI Tools for Resume Analysis
+# ------------------------------------------
+
+# Guess the most likely job title the candidate is applying for
 def guess_job_title(resume_text):
     prompt = f"""
 You are a professional career analyst.
@@ -52,6 +69,7 @@ Be specific but realistic. Return only the job title.
     )
     return response.choices[0].message.content.strip()
 
+# Ask a realistic, resume-based interview question for the given job
 def ask_interview_question(resume_text, job_title, previous_questions):
     prompt = f"""
 You are a professional recruiter conducting a mock interview for the position of {job_title}.
@@ -73,6 +91,7 @@ Avoid repeating these previous questions:
     )
     return response.choices[0].message.content.strip()
 
+# Generate feedback based on the candidate's answer and resume
 def get_feedback(question, answer, resume_text, job_title):
     prompt = f"""
 You're an expert interview coach.
@@ -95,6 +114,7 @@ Give constructive feedback considering their resume:
     )
     return response.choices[0].message.content.strip()
 
+# Score the candidate's response using multiple criteria, and return a score + breakdown
 def score_answer(question, answer, resume_text, job_title):
     prompt = f"""
 You are a professional recruiter evaluating a candidate's interview performance for the role of {job_title}.
@@ -137,12 +157,14 @@ Breakdown:
     full_text = response.choices[0].message.content.strip()
     lines = full_text.splitlines()
 
+    # Extract just the score (e.g., "Score: 7")
     score_line = next((line for line in lines if line.lower().startswith("score:")), "Score: 0")
     try:
         score = int(score_line.split(":")[1].strip())
     except:
         score = 0
 
+    # The rest of the content is the breakdown of evaluation
     breakdown = "\n".join(line for line in lines if not line.lower().startswith("score:"))
 
     return score, breakdown
