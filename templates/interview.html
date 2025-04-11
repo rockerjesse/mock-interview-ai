@@ -1,390 +1,460 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>AI Interview Chat</title>
-    <style>
-        :root {
-            --bg-color: #121212;
-            --text-color: #e0e0e0;
-            --container-bg: #1e1e1e;
-            --ai-bg: #263238;
-            --user-bg: #2e7d32;
-            --input-bg: #2c2c2c;
-            --btn-bg: #1976d2;
-            --btn-hover: #1565c0;
-            --upload-btn-bg: #424242;
-            --upload-btn-hover: #616161;
-        }
+  <title>AI Interview Chat</title>
+  <style>
+    :root {
+      --bg-color: #121212;
+      --text-color: #e0e0e0;
+      --container-bg: #1e1e1e;
+      --ai-bg: #263238;
+      --user-bg: #2e7d32;
+      --input-bg: #2c2c2c;
+      --btn-bg: #1976d2;
+      --btn-hover: #1565c0;
+      --upload-btn-bg: #424242;
+      --upload-btn-hover: #616161;
+    }
 
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-        }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+    }
 
-        h2 {
-            color: var(--btn-bg);
-        }
+    h2 {
+      color: var(--btn-bg);
+    }
 
-        #upload-section, #start-section, #chat-container {
-            max-width: 600px;
-            margin: 2rem auto;
-            text-align: center;
-        }
+    #upload-section, #start-section, #chat-container {
+      max-width: 600px;
+      margin: 2rem auto;
+      text-align: center;
+    }
 
-        #upload-form {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 1rem;
-        }
+    #upload-form {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1rem;
+    }
 
-        #upload-form input[type="file"] {
-            font-size: 1rem;
-            padding: 0.5rem;
-            border-radius: 6px;
-            border: 1px solid #888;
-            background-color: var(--container-bg);
-            color: var(--text-color);
-        }
+    #upload-form input[type="file"] {
+      font-size: 1rem;
+      padding: 0.5rem;
+      border-radius: 6px;
+      border: 1px solid #888;
+      background-color: var(--container-bg);
+      color: var(--text-color);
+    }
 
-        #upload-form button {
-            font-size: 1rem;
-            padding: 0.6rem 1.2rem;
-            background-color: var(--upload-btn-bg);
-            color: var(--text-color);
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-        }
+    #upload-form button {
+      font-size: 1rem;
+      padding: 0.6rem 1.2rem;
+      background-color: var(--upload-btn-bg);
+      color: var(--text-color);
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
 
-        #upload-form button:hover {
-            background-color: var(--upload-btn-hover);
-        }
+    #upload-form button:hover {
+      background-color: var(--upload-btn-hover);
+    }
 
-        #upload-form button:disabled,
-        #upload-form button[disabled]:hover {
-            background-color: #333 !important;
-            color: #888 !important;
-            cursor: not-allowed !important;
-            box-shadow: none;
-            opacity: 0.6;
-        }
+    #upload-form button:disabled,
+    #upload-form button[disabled]:hover {
+      background-color: #333 !important;
+      color: #888 !important;
+      cursor: not-allowed !important;
+      box-shadow: none;
+      opacity: 0.6;
+    }
 
-        #start-btn {
-            font-size: 1.1rem;
-            padding: 0.7rem 1.5rem;
-            border: none;
-            border-radius: 8px;
-            background-color: var(--btn-bg);
-            color: white;
-            cursor: pointer;
-        }
+    #start-btn {
+      font-size: 1.1rem;
+      padding: 0.7rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      background-color: var(--btn-bg);
+      color: white;
+      cursor: pointer;
+    }
 
-        #start-btn:hover {
-            background-color: var(--btn-hover);
-        }
+    #start-btn:hover {
+      background-color: var(--btn-hover);
+    }
 
-        #start-section {
-            display: none;
-        }
+    #start-section {
+      display: none;
+    }
 
-        #chat-container {
-            background-color: var(--container-bg);
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-            padding: 1rem;
-            display: none;
-            opacity: 0;
-            transform: translateY(20px);
-            transition: opacity 0.5s ease, transform 0.5s ease;
-        }
+    #chat-container {
+      background-color: var(--container-bg);
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+      padding: 1rem;
+      display: none;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
 
-        #chat-container.show {
-            display: block;
-            opacity: 1;
-            transform: translateY(0);
-        }
+    #chat-container.show {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
 
-        .message {
-            margin-bottom: 1rem;
-            text-align: left;
-        }
+    .message {
+      margin-bottom: 1rem;
+      text-align: left;
+    }
 
-        .ai {
-            background-color: var(--ai-bg);
-            padding: 0.5rem;
-            border-radius: 6px;
-        }
+    .ai {
+      background-color: var(--ai-bg);
+      padding: 0.5rem;
+      border-radius: 6px;
+    }
 
-        .user {
-            background-color: var(--user-bg);
-            padding: 0.5rem;
-            border-radius: 6px;
-            text-align: right;
-        }
+    .user {
+      background-color: var(--user-bg);
+      padding: 0.5rem;
+      border-radius: 6px;
+      text-align: right;
+    }
 
-        #input-form {
-            display: flex;
-            margin-top: 1rem;
-            align-items: center;
-            gap: 0.5rem;
-        }
+    #input-form {
+      display: flex;
+      margin-top: 1rem;
+      align-items: center;
+      gap: 0.5rem;
+    }
 
-        #message-input {
-            flex: 1;
-            padding: 0.5rem;
-            background-color: var(--input-bg);
-            color: var(--text-color);
-            border: 1px solid #444;
-            border-radius: 6px;
-        }
+    #message-input {
+      flex: 1;
+      padding: 0.5rem;
+      background-color: var(--input-bg);
+      color: var(--text-color);
+      border: 1px solid #444;
+      border-radius: 6px;
+    }
 
-        #input-form button[type="submit"] {
-            background-color: var(--btn-bg);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            padding: 0.5rem 1rem;
-            cursor: pointer;
-        }
+    #input-form button[type="submit"] {
+      background-color: var(--btn-bg);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+    }
 
-        #input-form button[type="submit"]:hover {
-            background-color: var(--btn-hover);
-        }
+    #input-form button[type="submit"]:hover {
+      background-color: var(--btn-hover);
+    }
 
-        .mic-button {
-            background-color: #555;
-            border: none;
-            color: white;
-            font-size: 1.5rem;
-            padding: 0.3rem 0.6rem;
-            cursor: pointer;
-            border-radius: 6px;
-        }
+    .mic-button {
+      background-color: #555;
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      padding: 0.3rem 0.6rem;
+      cursor: pointer;
+      border-radius: 6px;
+    }
 
-        .mic-button.active {
-            background-color: crimson;
-            animation: pulse 1.2s infinite;
-        }
+    .mic-button.active {
+      background-color: crimson;
+      animation: pulse 1.2s infinite;
+    }
 
-        #mic-timer {
-            font-size: 0.9rem;
-            margin-left: 0.5rem;
-            color: var(--text-color);
-            opacity: 0.75;
-            min-width: 45px;
-        }
+    #mic-timer {
+      font-size: 0.9rem;
+      margin-left: 0.5rem;
+      color: var(--text-color);
+      opacity: 0.75;
+      min-width: 45px;
+    }
 
-        .spinner {
-            font-size: 0.9rem;
-            margin-left: 0.5rem;
-            color: #aaa;
-        }
+    .spinner {
+      font-size: 0.9rem;
+      margin-left: 0.5rem;
+      color: #aaa;
+    }
 
-        #audio-controls {
-            margin-top: 1rem;
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-        }
+    #audio-controls {
+      margin-top: 1rem;
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+    }
 
-        #audio-controls button {
-            background-color: #333;
-            color: #fff;
-            border: none;
-            padding: 0.4rem 0.8rem;
-            border-radius: 6px;
-            cursor: pointer;
-        }
+    #audio-controls button {
+      background-color: #333;
+      color: #fff;
+      border: none;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      cursor: pointer;
+    }
 
-        #audio-controls button:hover {
-            background-color: #555;
-        }
+    #audio-controls button:hover {
+      background-color: #555;
+    }
 
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(220, 20, 60, 0.5); }
-            70% { box-shadow: 0 0 0 12px rgba(220, 20, 60, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(220, 20, 60, 0); }
-        }
-    </style>
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(220, 20, 60, 0.5);
+      }
+      70% {
+        box-shadow: 0 0 0 12px rgba(220, 20, 60, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(220, 20, 60, 0);
+      }
+    }
+  </style>
 </head>
 <body>
-    <div id="upload-section">
-        <h2>🎤 AI Interview Chat</h2>
-        <form id="upload-form" enctype="multipart/form-data">
-            <input type="file" name="resume" required />
-            <button type="submit" id="upload-btn">
-                <span id="upload-text">Upload Resume</span>
-                <span id="upload-spinner" class="spinner" style="display: none;">⏳</span>
-            </button>
-        </form>
-    </div>
+<div id="upload-section">
+  <h2>🎤 AI Interview Chat</h2>
+  <form id="upload-form" enctype="multipart/form-data">
+    <input type="file" name="resume" required />
+    <button type="submit" id="upload-btn">
+      <span id="upload-text">Upload Resume</span>
+      <span id="upload-spinner" class="spinner" style="display: none;">⏳</span>
+    </button>
+  </form>
+</div>
 
-    <div id="start-section">
-        <button id="start-btn">Start Interview</button>
-    </div>
+<div id="start-section">
+  <button id="start-btn">Start Interview</button>
+</div>
 
-    <div id="chat-container">
-        <div id="chat-log"></div>
-        <form id="input-form">
-            <input type="text" id="message-input" placeholder="Type your answer..." autocomplete="off" disabled />
-            <button type="button" class="mic-button" id="micBtn" title="Click to speak">🎙</button>
-            <span id="mic-timer" style="display:none;">00:00</span>
-            <button type="submit" disabled>Send</button>
-        </form>
+<div id="chat-container">
+  <div id="chat-log"></div>
+  <form id="input-form">
+    <input type="text" id="message-input" placeholder="Type your answer..." autocomplete="off" disabled />
+    <button type="button" class="mic-button" id="micBtn" title="Click to speak">🎙</button>
+    <span id="mic-timer" style="display:none;">00:00</span>
+    <button type="submit" disabled>Send</button>
+  </form>
 
-        <!-- New audio control buttons -->
-        <div id="audio-controls">
-            <button id="mute-btn">🔇 Mute</button>
-            <button id="pause-btn">⏸️ Pause</button>
-            <button id="resume-btn">▶️ Resume</button>
-            <button id="restart-btn">⏮️ Restart</button>
-        </div>
-    </div>
+  <!-- New audio control buttons -->
+  <div id="audio-controls">
+    <button id="mute-btn">🔇 Mute</button>
+    <button id="pause-btn">⏸️ Pause</button>
+    <button id="resume-btn">▶️ Resume</button>
+    <button id="restart-btn">⏮️ Restart</button>
+  </div>
+</div>
 
-    <script>
-        const chatLog = document.getElementById("chat-log");
-        const inputForm = document.getElementById("input-form");
-        const messageInput = document.getElementById("message-input");
-        const uploadForm = document.getElementById("upload-form");
-        const uploadSection = document.getElementById("upload-section");
-        const startSection = document.getElementById("start-section");
-        const startBtn = document.getElementById("start-btn");
-        const sendBtn = inputForm.querySelector("button[type='submit']");
-        const micBtn = document.getElementById("micBtn");
-        const micTimer = document.getElementById("mic-timer");
+<script>
+  const chatLog = document.getElementById("chat-log");
+  const inputForm = document.getElementById("input-form");
+  const messageInput = document.getElementById("message-input");
+  const uploadForm = document.getElementById("upload-form");
+  const uploadSection = document.getElementById("upload-section");
+  const startSection = document.getElementById("start-section");
+  const startBtn = document.getElementById("start-btn");
+  const sendBtn = inputForm.querySelector("button[type='submit']");
+  const micBtn = document.getElementById("micBtn");
+  const micTimer = document.getElementById("mic-timer");
 
-        const uploadBtn = document.getElementById("upload-btn");
-        const uploadText = document.getElementById("upload-text");
-        const uploadSpinner = document.getElementById("upload-spinner");
+  const uploadBtn = document.getElementById("upload-btn");
+  const uploadText = document.getElementById("upload-text");
+  const uploadSpinner = document.getElementById("upload-spinner");
 
-        const muteBtn = document.getElementById("mute-btn");
-        const pauseBtn = document.getElementById("pause-btn");
-        const resumeBtn = document.getElementById("resume-btn");
-        const restartBtn = document.getElementById("restart-btn");
+  const muteBtn = document.getElementById("mute-btn");
+  const pauseBtn = document.getElementById("pause-btn");
+  const resumeBtn = document.getElementById("resume-btn");
+  const restartBtn = document.getElementById("restart-btn");
 
-        let currentAudio = null;
-        let initialInterviewData = null;
+  let currentAudio = null;
+  let initialInterviewData = null;
 
-        uploadForm.onsubmit = async (e) => {
-            e.preventDefault();
+  uploadForm.onsubmit = async (e) => {
+    e.preventDefault();
 
-            uploadBtn.disabled = true;
-            uploadText.style.display = "none";
-            uploadSpinner.style.display = "inline";
+    uploadBtn.disabled = true;
+    uploadText.style.display = "none";
+    uploadSpinner.style.display = "inline";
 
-            const formData = new FormData(uploadForm);
-            const res = await fetch("/upload", {
-                method: "POST",
-                body: formData
-            });
+    const formData = new FormData(uploadForm);
+    const res = await fetch("/upload", {
+      method: "POST",
+      body: formData
+    });
 
-            const data = await res.json();
-            initialInterviewData = data;
+    initialInterviewData = await res.json();
 
-            startSection.style.display = "block";
-            uploadSection.style.display = "none";
+    startSection.style.display = "block";
+    uploadSection.style.display = "none";
 
-            uploadBtn.disabled = false;
-            uploadText.style.display = "inline";
-            uploadSpinner.style.display = "none";
-        };
+    uploadBtn.disabled = false;
+    uploadText.style.display = "inline";
+    uploadSpinner.style.display = "none";
+  };
 
-        startBtn.onclick = () => {
-            if (!initialInterviewData) return;
+  startBtn.onclick = () => {
+    if (!initialInterviewData) return;
 
-            const data = initialInterviewData;
-            addMessage("ai", `You're applying for a <strong>${data.job_title}</strong> position. Let's begin!${data.question}`);
-            speakText(stripHtml(data.question));
+    const data = initialInterviewData;
+    addMessage("ai", `You're applying for a <strong>${data.job_title}</strong> position. Let's begin!${data.question}`);
+    speakText(stripHtml(data.question));
 
-            messageInput.disabled = false;
-            sendBtn.disabled = false;
-            document.getElementById("chat-container").classList.add("show");
-            startSection.style.display = "none";
-        };
+    messageInput.disabled = false;
+    sendBtn.disabled = false;
+    document.getElementById("chat-container").classList.add("show");
+    startSection.style.display = "none";
+  };
 
-        inputForm.onsubmit = async (e) => {
-            e.preventDefault();
-            const userMessage = messageInput.value;
-            if (!userMessage.trim()) return;
+  inputForm.onsubmit = async (e) => {
+    e.preventDefault();
+    const userMessage = messageInput.value;
+    if (!userMessage.trim()) return;
 
-            addMessage("user", userMessage);
-            messageInput.value = "";
+    addMessage("user", userMessage);
+    messageInput.value = "";
 
-            const res = await fetch("/chat", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: userMessage })
-            });
+    const res = await fetch("/chat", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({message: userMessage})
+    });
 
-            const data = await res.json();
-            addMessage("ai", data.feedback);
-            speakText(stripHtml(data.feedback));
-        };
+    const data = await res.json();
+    addMessage("ai", data.feedback);
+    await speakText(stripHtml(data.feedback));
+  };
 
-        async function speakText(text) {
-            if (currentAudio && !currentAudio.paused) {
-                currentAudio.pause();
-            }
+  async function speakText(text) {
+    if (currentAudio && !currentAudio.paused) {
+      currentAudio.pause();
+    }
 
-            const res = await fetch("/speak", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text })
-            });
-            if (!res.ok) return;
+    const res = await fetch("/speak", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({text})
+    });
+    if (!res.ok) return;
 
-            const blob = await res.blob();
-            const url = URL.createObjectURL(blob);
-            currentAudio = new Audio(url);
-            currentAudio.originalSrc = url;
-            currentAudio.play();
-        }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    currentAudio = new Audio(url);
+    currentAudio.originalSrc = url;
+    await currentAudio.play();
+  }
 
-        muteBtn.onclick = () => {
-            if (currentAudio) {
-                currentAudio.muted = !currentAudio.muted;
-                muteBtn.textContent = currentAudio.muted ? "🔈 Unmute" : "🔇 Mute";
-            }
-        };
+  muteBtn.onclick = () => {
+    if (currentAudio) {
+      currentAudio.muted = !currentAudio.muted;
+      muteBtn.textContent = currentAudio.muted ? "🔈 Unmute" : "🔇 Mute";
+    }
+  };
 
-        pauseBtn.onclick = () => {
-            if (currentAudio && !currentAudio.paused) {
-                currentAudio.pause();
-            }
-        };
+  pauseBtn.onclick = () => {
+    if (currentAudio && !currentAudio.paused) {
+      currentAudio.pause();
+    }
+  };
 
-        resumeBtn.onclick = () => {
-            if (currentAudio && currentAudio.paused) {
-                currentAudio.play();
-            }
-        };
+  resumeBtn.onclick = () => {
+    if (currentAudio && currentAudio.paused) {
+      currentAudio.play();
+    }
+  };
 
-        restartBtn.onclick = () => {
-            if (currentAudio && currentAudio.originalSrc) {
-                const newAudio = new Audio(currentAudio.originalSrc);
-                currentAudio.pause();
-                currentAudio = newAudio;
-                currentAudio.play();
-            }
-        };
+  restartBtn.onclick = () => {
+    if (currentAudio && currentAudio.originalSrc) {
+      const newAudio = new Audio(currentAudio.originalSrc);
+      currentAudio.pause();
+      currentAudio = newAudio;
+      currentAudio.play();
+    }
+  };
 
-        function addMessage(sender, text) {
-            const div = document.createElement("div");
-            div.className = `message ${sender}`;
-            div.innerHTML = text.replace(/\n/g, "<br>");
-            chatLog.appendChild(div);
-            chatLog.scrollTop = chatLog.scrollHeight;
-        }
+  function addMessage(sender, text) {
+    const div = document.createElement("div");
+    div.className = `message ${sender}`;
+    div.innerHTML = text.replace(/\n/g, "<br>");
+    chatLog.appendChild(div);
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }
 
-        function stripHtml(html) {
-            let div = document.createElement("div");
-            div.innerHTML = html;
-            return div.textContent || div.innerText || "";
-        }
-    </script>
+  function stripHtml(html) {
+    let div = document.createElement("div");
+    div.innerHTML = html;
+    return div.textContent || div.innerText || "";
+  }
+
+  let recognition;
+  let isListening = false;
+
+  micBtn.onclick = () => {
+    if (!recognition) {
+      // Initialize SpeechRecognition
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert("Speech recognition is not supported in this browser.");
+        return;
+      }
+
+      recognition = new SpeechRecognition();
+      recognition.lang = "en-US"; // Set language
+      recognition.interimResults = false; // Only final results
+      recognition.maxAlternatives = 1;
+
+      // Handle recognition results
+      recognition.onresult = (event) => {
+        messageInput.value = event.results[0][0].transcript; // Populate the text box
+      };
+
+      // Handle errors
+      recognition.onerror = (event) => {
+        console.error("Speech recognition error:", event.error);
+        alert("An error occurred during speech recognition. Please try again.");
+      };
+
+      // Reset button state when recognition ends
+      recognition.onend = () => {
+        isListening = false;
+        micBtn.classList.remove("active");
+        micTimer.style.display = "none";
+      };
+    }
+
+    if (isListening) {
+      recognition.stop(); // Stop listening
+      isListening = false;
+      micBtn.classList.remove("active");
+      micTimer.style.display = "none";
+    } else {
+      recognition.start(); // Start listening
+      isListening = true;
+      micBtn.classList.add("active");
+      micTimer.style.display = "inline";
+      startMicTimer(); // Optional: Start a timer display
+    }
+  };
+
+  // Optional: Timer display for microphone recording
+  let micTimerInterval;
+
+  function startMicTimer() {
+    let seconds = 0;
+    micTimer.textContent = "00:00";
+    clearInterval(micTimerInterval);
+    micTimerInterval = setInterval(() => {
+      seconds++;
+      const mins = String(Math.floor(seconds / 60)).padStart(2, "0");
+      const secs = String(seconds % 60).padStart(2, "0");
+      micTimer.textContent = `${mins}:${secs}`;
+    }, 1000);
+  }
+</script>
 </body>
 </html>
