@@ -63,7 +63,7 @@ def delete_old_files(folder: str, max_age_seconds=600):
 # Home page: portal where user picks a tool
 @app.route("/", methods=["GET"])
 def portal():
-    return render_template("portal.html")
+    return render_template("career_home.html")
 
 
 # Interview tool page
