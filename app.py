@@ -16,7 +16,7 @@ app = Flask(__name__)
 
 # Secret key is used to protect sensitive data like user sessions
 # NOTE: This should be changed to something secure in production
-app.secret_key = 'super_secret_key'
+app.secret_key = os.getenv("SECRET_KEY")
 
 # Define absolute paths for file storage and the database
 basedir = os.path.abspath(os.path.dirname(__file__))
