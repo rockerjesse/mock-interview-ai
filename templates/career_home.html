@@ -22,28 +22,59 @@
         }
 
         p {
-            color: #aaa;
-            max-width: 500px;
+            max-width: 600px;
             margin-bottom: 2rem;
+            line-height: 1.5;
+            color: #ccc;
         }
 
-        a.button {
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 0.7rem 1.5rem;
             background-color: #1976d2;
             color: white;
-            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
             text-decoration: none;
-            border-radius: 8px;
-            font-size: 1.1rem;
         }
 
-        a.button:hover {
+        .btn:hover {
             background-color: #1565c0;
         }
+
+        .logout-btn {
+            background-color: #424242;
+        }
+
+        .logout-btn:hover {
+            background-color: #616161;
+        }
+
     </style>
 </head>
 <body>
-    <h1>🚀 Career Footprint</h1>
-    <p>Your personal career home. Start exploring tools and guidance powered by AI.</p>
-    <a href="/interview" class="button">Launch AI Interview</a>
+
+<!-- Logout Button Top Right -->
+<div style="position: absolute; top: 1rem; right: 1rem;">
+    <a href="{{ url_for('logout') }}">
+        <button class="btn logout-btn">Logout</button>
+    </a>
+</div>
+
+<h1>Welcome, {{ current_user.username }}!</h1>
+
+<p>This is your Career Footprint home base. Start exploring tools powered by AI.</p>
+
+<div class="button-container">
+    <a href="{{ url_for('interview') }}" class="btn">Launch AI Interview</a>
+</div>
+
 </body>
 </html>

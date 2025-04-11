@@ -1,19 +1,36 @@
-# Python
+
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
 env/
 venv/
+ENV/
+env.bak/
+venv.bak/
+.idea/
 
-# Environment variables
+# Flask instance folder (contains database, uploads, etc.)
+instance/
+uploads/
+
+# Environment variables file
 .env
 
-# IDE and OS specific files
-.idea/
-.vscode/
-.DS_Store
-Thumbs.db
+# SQLite database files
+*.db
 
-# Render or Heroku config
-render.yaml
+# VS Code settings
+.vscode/
+
+# macOS system files
+.DS_Store
+
+# Logs
+*.log
