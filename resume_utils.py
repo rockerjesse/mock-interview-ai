@@ -1,8 +1,8 @@
 # Import required libraries
-import openai                # To use the OpenAI GPT and TTS APIs
-import os                    # For handling file paths and environment variables
-import pdfplumber            # To read and extract text from PDF resumes
-import docx                  # To read Microsoft Word (.docx) resumes
+import openai  # To use the OpenAI GPT and TTS APIs
+import os  # For handling file paths and environment variables
+import pdfplumber  # To read and extract text from PDF resumes
+import docx  # To read Microsoft Word (.docx) resumes
 from dotenv import load_dotenv  # To load environment variables from a .env file
 
 # Load variables from .env file (like your OpenAI API key)
@@ -10,6 +10,7 @@ load_dotenv()
 
 # Initialize the OpenAI client with your API key
 client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
 
 # ------------------------------------------
 # Resume Uploading & Text Extraction
@@ -29,30 +30,34 @@ def load_resume(path="resume.pdf"):
     else:
         raise ValueError("Unsupported resume format. Use .pdf, .docx, or .txt")
 
+
 # Extract text from a PDF resume using pdfplumber
-def load_pdf(path):
+def load_pdf(path: str):
     text = ""
     with pdfplumber.open(path) as pdf:
         for page in pdf.pages:
             text += page.extract_text() or ""
     return text.strip()
 
+
 # Extract text from a .docx (Word) resume
-def load_docx(path):
+def load_docx(path: str):
     doc = docx.Document(path)
     return "\n".join([para.text for para in doc.paragraphs]).strip()
 
+
 # Load plain text resume
-def load_txt(path):
+def load_txt(path: str):
     with open(path, "r", encoding="utf-8") as file:
         return file.read().strip()
+
 
 # ------------------------------------------
 # AI Tools for Resume Analysis
 # ------------------------------------------
 
 # Guess the most likely job title the candidate is applying for
-def guess_job_title(resume_text):
+def guess_job_title(resume_text: str):
     prompt = f"""
 You are a professional career analyst.
 
@@ -69,8 +74,9 @@ Be specific but realistic. Return only the job title.
     )
     return response.choices[0].message.content.strip()
 
+
 # Ask a realistic, resume-based interview question for the given job
-def ask_interview_question(resume_text, job_title, previous_questions):
+def ask_interview_question(resume_text: str, job_title: str, previous_questions: list[str]):
     prompt = f"""
 You are a professional recruiter conducting a mock interview for the position of {job_title}.
 
@@ -91,8 +97,9 @@ Avoid repeating these previous questions:
     )
     return response.choices[0].message.content.strip()
 
+
 # Generate feedback based on the candidate's answer and resume
-def get_feedback(question, answer, resume_text, job_title):
+def get_feedback(question: str, answer: str, resume_text: str, job_title: str):
     prompt = f"""
 You're an expert interview coach.
 
@@ -114,8 +121,9 @@ Give constructive feedback considering their resume:
     )
     return response.choices[0].message.content.strip()
 
+
 # Score the candidate's response using multiple criteria, and return a score + breakdown
-def score_answer(question, answer, resume_text, job_title):
+def score_answer(question: str, answer: str, resume_text: str, job_title: str):
     prompt = f"""
 You are a professional recruiter evaluating a candidate's interview performance for the role of {job_title}.
 

@@ -33,20 +33,22 @@ ALLOWED_EXTENSIONS = {'pdf', 'docx', 'txt'}
 
 # Dictionary to hold all user session data (in-memory for now, not saved to a database)
 user_data = {
-    "resume_text": "",           # Full text of the uploaded resume
-    "job_title": "",             # Job title guessed by AI
-    "previous_questions": [],    # All questions asked so far
-    "current_question": "",      # Most recent question being answered
-    "main_answer": "",           # First user answer
-    "stage": "initial"           # Current stage: "initial", "followup", or "done"
+    "resume_text": "",  # Full text of the uploaded resume
+    "job_title": "",  # Job title guessed by AI
+    "previous_questions": [],  # All questions asked so far
+    "current_question": "",  # Most recent question being answered
+    "main_answer": "",  # First user answer
+    "stage": "initial"  # Current stage: "initial", "followup", or "done"
 }
 
+
 # Check if the file has one of the allowed extensions
-def allowed_file(filename):
+def allowed_file(filename: str) -> bool:
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+
 # Clean up old resume files from the upload folder
-def delete_old_files(folder, max_age_seconds=600):
+def delete_old_files(folder: str, max_age_seconds=600):
     now = time.time()
     for filename in os.listdir(folder):
         path = os.path.join(folder, filename)
@@ -57,15 +59,18 @@ def delete_old_files(folder, max_age_seconds=600):
             except Exception as e:
                 app.logger.error(f"Failed to delete {path}: {e}")
 
+
 # Home page: portal where user picks a tool
 @app.route("/", methods=["GET"])
 def portal():
     return render_template("portal.html")
 
+
 # Interview tool page
 @app.route("/interview", methods=["GET"])
 def interview():
     return render_template("interview.html")
+
 
 # Upload endpoint: receives resume file, processes it, and generates first interview question
 @app.route("/upload", methods=["POST"])
@@ -111,6 +116,7 @@ def upload():
         return jsonify({"job_title": job_title, "question": formatted_question})
 
     return jsonify({"error": "Invalid file"}), 400
+
 
 # Chat endpoint: processes either the first or second (follow-up) answer and returns feedback
 @app.route("/chat", methods=["POST"])
@@ -181,6 +187,7 @@ Return only the follow-up question itself, with no extra explanation.
             "feedback": " Interview complete. Refresh the page to try another resume."
         })
 
+
 # Endpoint for Text-to-Speech: converts given text to audio and sends back as a file
 @app.route("/speak", methods=["POST"])
 def speak():
@@ -203,6 +210,7 @@ def speak():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 # Run the application when you execute this file directly (localhost:5000)
 if __name__ == "__main__":
