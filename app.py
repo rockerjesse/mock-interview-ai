@@ -1,93 +1,184 @@
-# Import required libraries for web development and OpenAI interaction
-from flask import Flask, render_template, request, jsonify, send_file, after_this_request
-from werkzeug.utils import secure_filename
-from dotenv import load_dotenv
-import os
-import time
-import openai
-import tempfile
+# Import necessary libraries from Flask and other tools
+from flask import Flask, render_template, request, jsonify, send_file, after_this_request, redirect, url_for, flash
+from flask_sqlalchemy import SQLAlchemy  # For database management
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user  # For user login handling
+from werkzeug.utils import secure_filename  # For safely handling uploaded file names
+from werkzeug.security import generate_password_hash, check_password_hash  # For password encryption
+from dotenv import load_dotenv  # For loading environment variables from .env file
+import os  # Built-in module for file paths and operations
+import time  # For handling timestamps
 
-# Import helper functions defined in resume_utils.py
-from resume_utils import (
-    load_resume,
+# Load environment variables from a .env file (for sensitive data like API keys)
+load_dotenv()
+
+# Initialize the Flask web app
+app = Flask(__name__)
+
+# Secret key is used to protect sensitive data like user sessions
+# NOTE: This should be changed to something secure in production
+app.secret_key = os.getenv("SECRET_KEY")
+
+# Define absolute paths for file storage and the database
+basedir = os.path.abspath(os.path.dirname(__file__))
+
+# Folder where uploaded resumes will be stored temporarily
+app.config['UPLOAD_FOLDER'] = os.path.join(basedir, 'uploads')
+
+# Define the location of the SQLite database file
+app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(basedir, 'instance', 'users.db')}"
+
+# Import database models (User model)
+from models.user import db, User
+
+# Initialize the database with the app
+db.init_app(app)
+
+# Setup Flask-Login for user authentication management
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "index"  # Where to redirect if a user isn't logged in
+
+# Import AI service modules used by the app
+from services.resume_parser import load_resume
+from services.ai_interview import (
     guess_job_title,
     ask_interview_question,
     get_feedback,
     score_answer
 )
+from services.tts_service import generate_tts_audio  # Text-to-speech service
 
-# Load environment variables from the .env file (e.g., API key)
-load_dotenv()
 
-# Connect to OpenAI API using your API key from environment variables
-client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# This tells Flask-Login how to load a user from the database
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
-# Create the Flask web application
-app = Flask(__name__)
 
-# Define the folder where resumes will be temporarily uploaded
-app.config['UPLOAD_FOLDER'] = 'uploads'
-
-# List of file extensions we will accept for resumes
+# Allowed file types for resume uploads
 ALLOWED_EXTENSIONS = {'pdf', 'docx', 'txt'}
 
-# Dictionary to hold all user session data (in-memory for now, not saved to a database)
+# Temporary storage for interview session data (resets per session)
 user_data = {
-    "resume_text": "",  # Full text of the uploaded resume
-    "job_title": "",  # Job title guessed by AI
-    "previous_questions": [],  # All questions asked so far
-    "current_question": "",  # Most recent question being answered
-    "main_answer": "",  # First user answer
-    "stage": "initial"  # Current stage: "initial", "followup", or "done"
+    "resume_text": "",
+    "job_title": "",
+    "previous_questions": [],
+    "current_question": "",
+    "main_answer": "",
+    "stage": "initial"  # Tracks if user is answering first question, follow-up, or done
 }
 
 
-# Check if the file has one of the allowed extensions
-def allowed_file(filename: str) -> bool:
+# Checks if uploaded file is allowed (based on file extension)
+def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-# Clean up old resume files from the upload folder
-def delete_old_files(folder: str, max_age_seconds=600):
+# Deletes old uploaded files to save space (files older than 10 minutes by default)
+def delete_old_files(folder, max_age_seconds=600):
     now = time.time()
     for filename in os.listdir(folder):
         path = os.path.join(folder, filename)
         if os.path.isfile(path) and now - os.path.getmtime(path) > max_age_seconds:
             try:
                 os.remove(path)
-                app.logger.info(f"Deleted old file: {path}")
             except Exception as e:
                 app.logger.error(f"Failed to delete {path}: {e}")
 
 
-# Home page: portal where user picks a tool
+# ------------------- ROUTES (App Pages) ------------------------
+
+# Home page
 @app.route("/", methods=["GET"])
-def portal():
+def index():
+    return render_template("index.html")
+
+
+# Login page
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+
+        user = User.query.filter_by(username=username).first()
+
+        # Check if user exists and password is correct
+        if user and check_password_hash(user.password, password):
+            login_user(user)
+            return redirect(url_for("career_home"))
+        else:
+            flash("Login failed. Please check your username and password.")
+            return redirect(url_for("login"))
+
+    return render_template("login.html")
+
+
+# Registration page (create new user)
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+
+        # Check if user already exists
+        existing_user = User.query.filter_by(username=username).first()
+        if existing_user:
+            flash("Username already exists.")
+            return redirect(url_for("register"))
+
+        # Hash the password for security
+        hashed_pw = generate_password_hash(password)
+        new_user = User(username=username, password=hashed_pw)
+        db.session.add(new_user)
+        db.session.commit()
+
+        # Automatically log in the new user
+        login_user(new_user)
+        return redirect(url_for("career_home"))
+
+    return render_template("register.html")
+
+
+# Log out the current user
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    flash('You have been logged out.')
+    return redirect(url_for('index'))
+
+
+# Main career planner home page (after login)
+@app.route("/career_home")
+@login_required
+def career_home():
     return render_template("career_home.html")
 
 
-# Interview tool page
-@app.route("/interview", methods=["GET"])
+# Interview page (AI Interview happens here)
+@app.route("/interview")
+@login_required
 def interview():
     return render_template("interview.html")
 
 
-# Upload endpoint: receives resume file, processes it, and generates first interview question
+# Upload resume route (called when user uploads a resume)
 @app.route("/upload", methods=["POST"])
+@login_required
 def upload():
-    # Clean up old files first
+    # Clean up old files
     delete_old_files(app.config['UPLOAD_FOLDER'])
 
     file = request.files["resume"]
 
-    # Only process the file if it's a supported type
+    # Check if file is allowed
     if file and allowed_file(file.filename):
-        # Sanitize filename
         filename = secure_filename(file.filename)
         path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(path)
 
-        # Schedule the file to be deleted after request finishes
+        # Delete the uploaded file after it's used
         @after_this_request
         def remove_file(response):
             try:
@@ -96,12 +187,12 @@ def upload():
                 app.logger.error(f"Failed to delete {path}: {e}")
             return response
 
-        # Extract resume text and ask first question
+        # Extract resume text using AI services
         resume_text = load_resume(path)
         job_title = guess_job_title(resume_text)
         question = ask_interview_question(resume_text, job_title, [])
 
-        # Store all necessary info for the interview session
+        # Save interview data for this session
         user_data.update({
             "resume_text": resume_text,
             "job_title": job_title,
@@ -111,107 +202,71 @@ def upload():
             "stage": "initial"
         })
 
-        # Send first question and job title back to front-end
+        # Return question to frontend
         formatted_question = f"<br><br><strong>Interview Question:</strong><br>{question}"
         return jsonify({"job_title": job_title, "question": formatted_question})
 
     return jsonify({"error": "Invalid file"}), 400
 
 
-# Chat endpoint: processes either the first or second (follow-up) answer and returns feedback
+# Chat route - Handles messages from user during interview
 @app.route("/chat", methods=["POST"])
+@login_required
 def chat():
     message = request.json["message"]
     resume_text = user_data["resume_text"]
     job_title = user_data["job_title"]
     stage = user_data["stage"]
 
-    # Handle the initial answer (first question)
+    # First answer stage
     if stage == "initial":
         user_data["main_answer"] = message
 
-        # Create a prompt asking for a follow-up question based on the first answer and resume
-        followup_prompt = f"""
-You are a mock interviewer.
+        followup_q = ask_interview_question(resume_text, job_title, user_data["previous_questions"])
 
-The candidate answered this question:
-"{user_data['current_question']}"
-
-With:
-"{message}"
-
-Now ask one clear and realistic follow-up question based on their answer and resume.
-
-Do NOT repeat the original question.
-Do NOT list multiple options.
-Return only the follow-up question itself, with no extra explanation.
-
---- Resume ---
-{resume_text}
-"""
-
-        # Ask OpenAI to generate the follow-up question
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "system", "content": followup_prompt}],
-            temperature=0.7
-        )
-
-        # Save and return the follow-up question
-        followup_q = response.choices[0].message.content.strip()
         user_data["stage"] = "followup"
         user_data["current_question"] = followup_q
         user_data["previous_questions"].append(followup_q)
 
         return jsonify({"feedback": f"<strong>Follow-up Question:</strong><br>{followup_q}"})
 
-    # Handle the follow-up answer (second question)
+    # Follow-up answer stage
     elif stage == "followup":
         full_answer = f"{user_data['main_answer']}\n\nFollow-up Answer:\n{message}"
         combined_questions = "\n\n".join(user_data["previous_questions"])
 
-        # Ask OpenAI for feedback and a score
         feedback = get_feedback(combined_questions, full_answer, resume_text, job_title)
         score, breakdown = score_answer(combined_questions, full_answer, resume_text, job_title)
 
         user_data["stage"] = "done"
 
-        # Send full response back including score breakdown
         return jsonify({
             "feedback": f"{feedback}<br><br><strong>Total Score:</strong> {score}/10<br><br><strong>Score Breakdown:</strong><br>{breakdown.replace(chr(10), '<br><br>')}"
         })
 
-    # If interview is already completed
+    # Interview is done
     else:
         return jsonify({
-            "feedback": " Interview complete. Refresh the page to try another resume."
+            "feedback": "Interview complete. Refresh the page to try another resume."
         })
 
 
-# Endpoint for Text-to-Speech: converts given text to audio and sends back as a file
+# Text-to-speech route - Converts text to audio
 @app.route("/speak", methods=["POST"])
+@login_required
 def speak():
     text = request.json.get("text")
     if not text:
         return jsonify({"error": "No text provided"}), 400
 
-    try:
-        # Create temporary mp3 file
-        with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as temp_audio:
-            response = client.audio.speech.create(
-                model="tts-1",
-                voice="nova",
-                input=text
-            )
-            response.stream_to_file(temp_audio.name)
-
-        # Send mp3 back to browser
-        return send_file(temp_audio.name, mimetype="audio/mpeg", as_attachment=False)
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    return generate_tts_audio(text)
 
 
-# Run the application when you execute this file directly (localhost:5000)
+# Run the app (only when directly running this file)
 if __name__ == "__main__":
+    # Create database tables if they don't exist
+    with app.app_context():
+        db.create_all()
+
+    # Start Flask web server
     app.run(debug=True, host="0.0.0.0", port=5000)
