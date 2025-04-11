@@ -21,6 +21,10 @@ app.secret_key = os.getenv("SECRET_KEY")
 # Define absolute paths for file storage and the database
 basedir = os.path.abspath(os.path.dirname(__file__))
 
+# Ensure the instance folder exists (for the SQLite DB)
+os.makedirs(os.path.join(basedir, 'instance'), exist_ok=True)
+
+
 # Folder where uploaded resumes will be stored temporarily
 app.config['UPLOAD_FOLDER'] = os.path.join(basedir, 'uploads')
 
