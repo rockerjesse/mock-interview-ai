@@ -174,10 +174,11 @@ def upload():
     # Clean up old files
     delete_old_files(app.config['UPLOAD_FOLDER'])
 
-    file = request.files["resume"]
-
-    # Check if file is allowed
-    if file and allowed_file(file.filename):
+    resume_text = ""
+    if "resume" in request.files:
+        file = request.files["resume"]
+        if not allowed_file(file.filename):
+            return jsonify({"error": "Invalid file type"}), 400
         filename = secure_filename(file.filename)
         path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(path)
@@ -193,24 +194,27 @@ def upload():
 
         # Extract resume text using AI services
         resume_text = load_resume(path)
-        job_title = guess_job_title(resume_text)
-        question = ask_interview_question(resume_text, job_title, [])
+    elif "resume_text" in request.form:
+        resume_text = request.form["resume_text"]
 
-        # Save interview data for this session
-        user_data.update({
-            "resume_text": resume_text,
-            "job_title": job_title,
-            "previous_questions": [question],
-            "current_question": question,
-            "main_answer": "",
-            "stage": "initial"
-        })
+    if not resume_text:
+        return jsonify({"error": "No resume text found"}), 400
+    job_title = guess_job_title(resume_text)
+    question = ask_interview_question(resume_text, job_title, [])
 
-        # Return question to frontend
-        formatted_question = f"<br><br><strong>Interview Question:</strong><br>{question}"
-        return jsonify({"job_title": job_title, "question": formatted_question})
+    # Save interview data for this session
+    user_data.update({
+        "resume_text": resume_text,
+        "job_title": job_title,
+        "previous_questions": [question],
+        "current_question": question,
+        "main_answer": "",
+        "stage": "initial"
+    })
 
-    return jsonify({"error": "Invalid file"}), 400
+    # Return question to frontend
+    formatted_question = f"<br><br><strong>Interview Question:</strong><br>{question}"
+    return jsonify({"job_title": job_title, "question": formatted_question, "resume_text": resume_text})
 
 
 # Chat route - Handles messages from user during interview
