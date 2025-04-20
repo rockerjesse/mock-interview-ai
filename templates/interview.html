@@ -1,476 +1,359 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>AI Interview Chat</title>
-  <style>
-    :root {
-      --bg-color: #121212;
-      --text-color: #e0e0e0;
-      --container-bg: #1e1e1e;
-      --ai-bg: #263238;
-      --user-bg: #2e7d32;
-      --input-bg: #2c2c2c;
-      --btn-bg: #1976d2;
-      --btn-hover: #1565c0;
-      --upload-btn-bg: #424242;
-      --upload-btn-hover: #616161;
-    }
+    <title>AI Interview Chat</title>
+    <!-- Include Bootstrap 5.3 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --container-bg: #1e1e1e;
+            --ai-bg: #263238;
+            --user-bg: #2e7d32;
+            --input-bg: #2c2c2c;
+            --btn-bg: #1976d2;
+            --btn-hover: #1565c0;
+        }
 
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: var(--bg-color);
-      color: var(--text-color);
-    }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
 
-    h2 {
-      color: var(--btn-bg);
-    }
+        h2 {
+            color: var(--btn-bg);
+        }
 
-    #upload-section, #start-section, #chat-container {
-      max-width: 600px;
-      margin: 2rem auto;
-      text-align: center;
-    }
-
-    #upload-form {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 1rem;
-    }
-
-    #upload-form input[type="file"] {
-      font-size: 1rem;
-      padding: 0.5rem;
-      border-radius: 6px;
-      border: 1px solid #888;
-      background-color: var(--container-bg);
-      color: var(--text-color);
-    }
-
-    #upload-form button {
-      font-size: 1rem;
-      padding: 0.6rem 1.2rem;
-      background-color: var(--upload-btn-bg);
-      color: var(--text-color);
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    #upload-form button:hover {
-      background-color: var(--upload-btn-hover);
-    }
-
-    #upload-form button:disabled,
-    #upload-form button[disabled]:hover {
-      background-color: #333 !important;
-      color: #888 !important;
-      cursor: not-allowed !important;
-      box-shadow: none;
-      opacity: 0.6;
-    }
-
-    #start-btn {
-      font-size: 1.1rem;
-      padding: 0.7rem 1.5rem;
-      border: none;
-      border-radius: 8px;
-      background-color: var(--btn-bg);
-      color: white;
-      cursor: pointer;
-    }
-
-    #start-btn:hover {
-      background-color: var(--btn-hover);
-    }
-
-    #start-section {
-      display: none;
-    }
-
-    #chat-container {
-      background-color: var(--container-bg);
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-      padding: 1rem;
-      display: none;
-      opacity: 0;
-      transform: translateY(20px);
-      transition: opacity 0.5s ease, transform 0.5s ease;
-    }
-
-    #chat-container.show {
-      display: block;
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    .message {
-      margin-bottom: 1rem;
-      text-align: left;
-    }
-
-    .ai {
-      background-color: var(--ai-bg);
-      padding: 0.5rem;
-      border-radius: 6px;
-    }
-
-    .user {
-      background-color: var(--user-bg);
-      padding: 0.5rem;
-      border-radius: 6px;
-      text-align: right;
-    }
-
-    #input-form {
-      display: flex;
-      margin-top: 1rem;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    #message-input {
-      flex: 1;
-      padding: 0.5rem;
-      background-color: var(--input-bg);
-      color: var(--text-color);
-      border: 1px solid #444;
-      border-radius: 6px;
-    }
-
-    #input-form button[type="submit"] {
-      background-color: var(--btn-bg);
-      color: white;
-      border: none;
-      border-radius: 6px;
-      padding: 0.5rem 1rem;
-      cursor: pointer;
-    }
-
-    #input-form button[type="submit"]:hover {
-      background-color: var(--btn-hover);
-    }
-
-    .mic-button {
-      background-color: #555;
-      border: none;
-      color: white;
-      font-size: 1.5rem;
-      padding: 0.3rem 0.6rem;
-      cursor: pointer;
-      border-radius: 6px;
-    }
-
-    .mic-button.active {
-      background-color: crimson;
-      animation: pulse 1.2s infinite;
-    }
-
-    #mic-timer {
-      font-size: 0.9rem;
-      margin-left: 0.5rem;
-      color: var(--text-color);
-      opacity: 0.75;
-      min-width: 45px;
-    }
-
-    .spinner {
-      font-size: 0.9rem;
-      margin-left: 0.5rem;
-      color: #aaa;
-    }
-
-    #audio-controls {
-      margin-top: 1rem;
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-    }
-
-    #audio-controls button {
-      background-color: #333;
-      color: #fff;
-      border: none;
-      padding: 0.4rem 0.8rem;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    #audio-controls button:hover {
-      background-color: #555;
-    }
-
-    @keyframes pulse {
-      0% {
-        box-shadow: 0 0 0 0 rgba(220, 20, 60, 0.5);
-      }
-      70% {
-        box-shadow: 0 0 0 12px rgba(220, 20, 60, 0);
-      }
-      100% {
-        box-shadow: 0 0 0 0 rgba(220, 20, 60, 0);
-      }
-    }
-  </style>
+        #chat-log {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+    </style>
 </head>
-<body>
-<div id="upload-section">
-  <h2>🎤 AI Interview Chat</h2>
-  <form id="upload-form" enctype="multipart/form-data">
-    <input type="file" name="resume" required />
-    <button type="submit" id="upload-btn">
-      <span id="upload-text">Upload Resume</span>
-      <span id="upload-spinner" class="spinner" style="display: none;">⏳</span>
-    </button>
-  </form>
+<body class="d-flex flex-column min-vh-100">
+<div id="upload-section" class="container text-center my-5">
+    <h2>🎤 AI Interview Chat</h2>
+    <form id="upload-form" enctype="multipart/form-data" class="d-flex justify-content-center align-items-center gap-3">
+        <input type="file" name="resume" class="form-control" required/>
+        <button type="submit" id="upload-btn" class="btn btn-secondary d-flex align-items-center gap-2">
+            <span id="upload-text">Upload Resume</span>
+            <span id="upload-spinner" class="spinner-border spinner-border-sm d-none"></span>
+        </button>
+    </form>
+    <button id="use-localstorage-btn" class="btn btn-outline-secondary mt-3 d-none">Use Stored Resume</button>
 </div>
 
-<div id="start-section">
-  <button id="start-btn">Start Interview</button>
+<div id="localstorage-modal" class="modal fade" tabindex="-1" aria-labelledby="localstorage-modal-label" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="localstorage-form" action="/upload" method="POST">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="localstorage-modal-label">Stored Resume</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <label for="localstorage-resume" class="form-label">Stored Resume</label>
+                    <textarea id="localstorage-resume" name="resume_text" rows="10" class="form-control"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button id="save-localstorage-btn" class="btn btn-primary">Save</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
-<div id="chat-container">
-  <div id="chat-log"></div>
-  <form id="input-form">
-    <input type="text" id="message-input" placeholder="Type your answer..." autocomplete="off" disabled />
-    <button type="button" class="mic-button" id="micBtn" title="Click to speak">🎙</button>
-    <span id="mic-timer" style="display:none;">00:00</span>
-    <button type="submit" disabled>Send</button>
-  </form>
-
-  <!-- New audio control buttons -->
-  <div id="audio-controls">
-    <button id="mute-btn">🔇 Mute</button>
-    <button id="pause-btn">⏸️ Pause</button>
-    <button id="resume-btn">▶️ Resume</button>
-    <button id="restart-btn">⏮️ Restart</button>
-  </div>
+<div id="start-section" class="container text-center my-5 d-none">
+    <button id="start-btn" class="btn btn-primary">Start Interview</button>
 </div>
 
+<div id="chat-container" class="container bg-dark text-light p-4 rounded shadow-lg d-none"
+     style="opacity: 0; transform: translateY(20px); transition: opacity 0.5s ease, transform 0.5s ease;">
+    <div id="chat-log" class="mb-3"></div>
+    <form id="input-form" class="d-flex align-items-center gap-2">
+        <input type="text" id="message-input" class="form-control" placeholder="Type your answer..." autocomplete="off"
+               disabled/>
+        <button type="button" class="btn btn-secondary mic-button" id="micBtn" title="Click to speak">🎙</button>
+        <span id="mic-timer" class="text-muted d-none">00:00</span>
+        <button type="submit" class="btn btn-primary" disabled>Send</button>
+    </form>
+
+    <div id="audio-controls" class="d-flex justify-content-center gap-3 mt-3">
+        <button id="mute-btn" class="btn btn-dark">🔇 Mute</button>
+        <button id="pause-btn" class="btn btn-dark">⏸️ Pause</button>
+        <button id="resume-btn" class="btn btn-dark">▶️ Resume</button>
+        <button id="restart-btn" class="btn btn-dark">⏮️ Restart</button>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-  const chatLog = document.getElementById("chat-log");
-  const inputForm = document.getElementById("input-form");
-  const messageInput = document.getElementById("message-input");
-  const uploadForm = document.getElementById("upload-form");
-  const uploadSection = document.getElementById("upload-section");
-  const startSection = document.getElementById("start-section");
-  const startBtn = document.getElementById("start-btn");
-  const sendBtn = inputForm.querySelector("button[type='submit']");
-  const micBtn = document.getElementById("micBtn");
-  const micTimer = document.getElementById("mic-timer");
+    const chatLog = document.getElementById("chat-log");
+    const inputForm = document.getElementById("input-form");
+    const messageInput = document.getElementById("message-input");
+    const uploadForm = document.getElementById("upload-form");
+    const uploadSection = document.getElementById("upload-section");
+    const startSection = document.getElementById("start-section");
+    const startBtn = document.getElementById("start-btn");
+    const sendBtn = inputForm.querySelector("button[type='submit']");
+    const micBtn = document.getElementById("micBtn");
+    const micTimer = document.getElementById("mic-timer");
 
-  const uploadBtn = document.getElementById("upload-btn");
-  const uploadText = document.getElementById("upload-text");
-  const uploadSpinner = document.getElementById("upload-spinner");
+    const uploadBtn = document.getElementById("upload-btn");
+    const uploadText = document.getElementById("upload-text");
+    const uploadSpinner = document.getElementById("upload-spinner");
 
-  const muteBtn = document.getElementById("mute-btn");
-  const pauseBtn = document.getElementById("pause-btn");
-  const resumeBtn = document.getElementById("resume-btn");
-  const restartBtn = document.getElementById("restart-btn");
+    const muteBtn = document.getElementById("mute-btn");
+    const pauseBtn = document.getElementById("pause-btn");
+    const resumeBtn = document.getElementById("resume-btn");
+    const restartBtn = document.getElementById("restart-btn");
 
-  let currentAudio = null;
-  let initialInterviewData = null;
+    const useLocalStorageBtn = document.getElementById("use-localstorage-btn");
+    const localStorageModal = new bootstrap.Modal(document.getElementById("localstorage-modal"));
+    const localStorageResume = document.getElementById("localstorage-resume");
+    const saveLocalStorageBtn = document.getElementById("save-localstorage-btn");
+    const localStorageForm = document.getElementById("localstorage-form");
 
-  uploadForm.onsubmit = async (e) => {
-    e.preventDefault();
+    let currentAudio = null;
+    let initialInterviewData = null;
 
-    uploadBtn.disabled = true;
-    uploadText.style.display = "none";
-    uploadSpinner.style.display = "inline";
-
-    const formData = new FormData(uploadForm);
-    const res = await fetch("/upload", {
-      method: "POST",
-      body: formData
-    });
-
-    initialInterviewData = await res.json();
-
-    startSection.style.display = "block";
-    uploadSection.style.display = "none";
-
-    uploadBtn.disabled = false;
-    uploadText.style.display = "inline";
-    uploadSpinner.style.display = "none";
-  };
-
-  startBtn.onclick = () => {
-    if (!initialInterviewData) return;
-
-    const data = initialInterviewData;
-    addMessage("ai", `You're applying for a <strong>${data.job_title}</strong> position. Let's begin!${data.question}`);
-    speakText(stripHtml(data.question));
-
-    messageInput.disabled = false;
-    sendBtn.disabled = false;
-    document.getElementById("chat-container").classList.add("show");
-    startSection.style.display = "none";
-  };
-
-  inputForm.onsubmit = async (e) => {
-    e.preventDefault();
-    const userMessage = messageInput.value;
-    if (!userMessage.trim()) return;
-
-    addMessage("user", userMessage);
-    messageInput.value = "";
-
-    const res = await fetch("/chat", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({message: userMessage})
-    });
-
-    const data = await res.json();
-    addMessage("ai", data.feedback);
-    await speakText(stripHtml(data.feedback));
-  };
-
-  async function speakText(text) {
-    if (currentAudio && !currentAudio.paused) {
-      currentAudio.pause();
+    // Check if a resume exists in localStorage
+    if (localStorage.getItem("resumeText")) {
+        useLocalStorageBtn.classList.remove("d-none");
     }
 
-    const res = await fetch("/speak", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({text})
-    });
-    if (!res.ok) return;
+    // Show the modal to view/edit the stored resume
+    useLocalStorageBtn.onclick = () => {
+        localStorageResume.value = localStorage.getItem("resumeText");
+        localStorageModal.show();
+    };
 
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    currentAudio = new Audio(url);
-    currentAudio.originalSrc = url;
-    await currentAudio.play();
-  }
+    function setupAiInterview() {
+        if (initialInterviewData.resume_text) {
+            // Store the resume text in localStorage
+            localStorage.setItem("resumeText", initialInterviewData.resume_text);
+            useLocalStorageBtn.classList.remove("d-none");
+        }
 
-  muteBtn.onclick = () => {
-    if (currentAudio) {
-      currentAudio.muted = !currentAudio.muted;
-      muteBtn.textContent = currentAudio.muted ? "🔈 Unmute" : "🔇 Mute";
-    }
-  };
+        startSection.classList.remove("d-none");
+        uploadSection.classList.add("d-none");
 
-  pauseBtn.onclick = () => {
-    if (currentAudio && !currentAudio.paused) {
-      currentAudio.pause();
-    }
-  };
-
-  resumeBtn.onclick = () => {
-    if (currentAudio && currentAudio.paused) {
-      currentAudio.play();
-    }
-  };
-
-  restartBtn.onclick = () => {
-    if (currentAudio && currentAudio.originalSrc) {
-      const newAudio = new Audio(currentAudio.originalSrc);
-      currentAudio.pause();
-      currentAudio = newAudio;
-      currentAudio.play();
-    }
-  };
-
-  function addMessage(sender, text) {
-    const div = document.createElement("div");
-    div.className = `message ${sender}`;
-    div.innerHTML = text.replace(/\n/g, "<br>");
-    chatLog.appendChild(div);
-    chatLog.scrollTop = chatLog.scrollHeight;
-  }
-
-  function stripHtml(html) {
-    let div = document.createElement("div");
-    div.innerHTML = html;
-    return div.textContent || div.innerText || "";
-  }
-
-  let recognition;
-  let isListening = false;
-
-  micBtn.onclick = () => {
-    if (!recognition) {
-      // Initialize SpeechRecognition
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) {
-        alert("Speech recognition is not supported in this browser.");
-        return;
-      }
-
-      recognition = new SpeechRecognition();
-      recognition.lang = "en-US"; // Set language
-      recognition.interimResults = false; // Only final results
-      recognition.maxAlternatives = 1;
-
-      // Handle recognition results
-      recognition.onresult = (event) => {
-        messageInput.value = event.results[0][0].transcript; // Populate the text box
-      };
-
-      // Handle errors
-      recognition.onerror = (event) => {
-        console.error("Speech recognition error:", event.error);
-        alert("An error occurred during speech recognition. Please try again.");
-      };
-
-      // Reset button state when recognition ends
-      recognition.onend = () => {
-        isListening = false;
-        micBtn.classList.remove("active");
-        micTimer.style.display = "none";
-      };
+        uploadBtn.disabled = false;
+        uploadText.classList.remove("d-none");
+        uploadSpinner.classList.add("d-none");
     }
 
-    if (isListening) {
-      recognition.stop(); // Stop listening
-      isListening = false;
-      micBtn.classList.remove("active");
-      micTimer.style.display = "none";
-    } else {
-      recognition.start(); // Start listening
-      isListening = true;
-      micBtn.classList.add("active");
-      micTimer.style.display = "inline";
-      startMicTimer(); // Optional: Start a timer display
+    // Save the edited resume back to localStorage
+    saveLocalStorageBtn.onclick = () => {
+        localStorage.setItem("resumeText", localStorageResume.value);
+        localStorageModal.hide();
+    };
+
+    localStorageForm.onsubmit = async (e) => {
+        e.preventDefault();
+
+        uploadBtn.disabled = true;
+        uploadText.classList.add("d-none");
+        uploadSpinner.classList.remove("d-none");
+
+        const formData = new FormData(localStorageForm);
+        const res = await fetch("/upload", {
+            method: "POST",
+            body: formData
+        });
+
+        initialInterviewData = await res.json();
+
+        this.setupAiInterview();
     }
-  };
 
-  // Optional: Timer display for microphone recording
-  let micTimerInterval;
+    uploadForm.onsubmit = async (e) => {
+        e.preventDefault();
 
-  function startMicTimer() {
-    let seconds = 0;
-    micTimer.textContent = "00:00";
-    clearInterval(micTimerInterval);
-    micTimerInterval = setInterval(() => {
-      seconds++;
-      const mins = String(Math.floor(seconds / 60)).padStart(2, "0");
-      const secs = String(seconds % 60).padStart(2, "0");
-      micTimer.textContent = `${mins}:${secs}`;
-    }, 1000);
-  }
+        uploadBtn.disabled = true;
+        uploadText.classList.add("d-none");
+        uploadSpinner.classList.remove("d-none");
+
+        const formData = new FormData(uploadForm);
+        const res = await fetch("/upload", {
+            method: "POST",
+            body: formData
+        });
+
+        initialInterviewData = await res.json();
+
+        this.setupAiInterview();
+    };
+
+    startBtn.onclick = () => {
+        if (!initialInterviewData) return;
+
+        const data = initialInterviewData;
+        addMessage("ai", `You're applying for a <strong>${data.job_title}</strong> position. Let's begin!${data.question}`);
+        speakText(stripHtml(data.question));
+
+        messageInput.disabled = false;
+        sendBtn.disabled = false;
+        const chatContainer = document.getElementById("chat-container");
+        chatContainer.classList.remove("d-none");
+        chatContainer.style.opacity = "1";
+        chatContainer.style.transform = "translateY(0)";
+        startSection.classList.add("d-none");
+    };
+
+    inputForm.onsubmit = async (e) => {
+        e.preventDefault();
+        const userMessage = messageInput.value;
+        if (!userMessage.trim()) return;
+
+        addMessage("user", userMessage);
+        messageInput.value = "";
+
+        const res = await fetch("/chat", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({message: userMessage})
+        });
+
+        const data = await res.json();
+        addMessage("ai", data.feedback);
+        await speakText(stripHtml(data.feedback));
+    };
+
+    async function speakText(text) {
+        if (currentAudio && !currentAudio.paused) {
+            currentAudio.pause();
+        }
+
+        const res = await fetch("/speak", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({text})
+        });
+        if (!res.ok) return;
+
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        currentAudio = new Audio(url);
+        currentAudio.originalSrc = url;
+        await currentAudio.play();
+    }
+
+    muteBtn.onclick = () => {
+        if (currentAudio) {
+            currentAudio.muted = !currentAudio.muted;
+            muteBtn.textContent = currentAudio.muted ? "🔈 Unmute" : "🔇 Mute";
+        }
+    };
+
+    pauseBtn.onclick = () => {
+        if (currentAudio && !currentAudio.paused) {
+            currentAudio.pause();
+        }
+    };
+
+    resumeBtn.onclick = () => {
+        if (currentAudio && currentAudio.paused) {
+            currentAudio.play();
+        }
+    };
+
+    restartBtn.onclick = () => {
+        if (currentAudio && currentAudio.originalSrc) {
+            const newAudio = new Audio(currentAudio.originalSrc);
+            currentAudio.pause();
+            currentAudio = newAudio;
+            currentAudio.play();
+        }
+    };
+
+    function addMessage(sender, text) {
+        const div = document.createElement("div");
+        div.className = `message ${sender}`;
+        div.innerHTML = text.replace(/\n/g, "<br>");
+        chatLog.appendChild(div);
+        chatLog.scrollTop = chatLog.scrollHeight;
+    }
+
+    function stripHtml(html) {
+        let div = document.createElement("div");
+        div.innerHTML = html;
+        return div.textContent || div.innerText || "";
+    }
+
+    let recognition;
+    let isListening = false;
+
+    micBtn.onclick = () => {
+        if (!recognition) {
+            // Initialize SpeechRecognition
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                alert("Speech recognition is not supported in this browser.");
+                return;
+            }
+
+            recognition = new SpeechRecognition();
+            recognition.lang = "en-US"; // Set language
+            recognition.interimResults = false; // Only final results
+            recognition.maxAlternatives = 1;
+
+            // Handle recognition results
+            recognition.onresult = (event) => {
+                messageInput.value = event.results[0][0].transcript; // Populate the text box
+            };
+
+            // Handle errors
+            recognition.onerror = (event) => {
+                console.error("Speech recognition error:", event.error);
+                alert("An error occurred during speech recognition. Please try again.");
+            };
+
+            // Reset button state when recognition ends
+            recognition.onend = () => {
+                isListening = false;
+                micBtn.classList.remove("active");
+                micTimer.classList.add("d-none");
+            };
+        }
+
+        if (isListening) {
+            recognition.stop(); // Stop listening
+            isListening = false;
+            micBtn.classList.remove("active");
+            micTimer.classList.add("d-none");
+        } else {
+            recognition.start(); // Start listening
+            isListening = true;
+            micBtn.classList.add("active");
+            micTimer.classList.remove("d-none");
+            startMicTimer(); // Optional: Start a timer display
+        }
+    };
+
+    // Optional: Timer display for microphone recording
+    let micTimerInterval;
+
+    function startMicTimer() {
+        let seconds = 0;
+        micTimer.textContent = "00:00";
+        clearInterval(micTimerInterval);
+        micTimerInterval = setInterval(() => {
+            seconds++;
+            const mins = String(Math.floor(seconds / 60)).padStart(2, "0");
+            const secs = String(seconds % 60).padStart(2, "0");
+            micTimer.textContent = `${mins}:${secs}`;
+        }, 1000);
+    }
 </script>
 
-<div style="text-align: center; margin-top: 3rem;">
-  <a href="{{ url_for('career_home') }}">
-    <button style="
-      background-color: #1976d2;
-      color: white;
-      padding: 0.7rem 1.5rem;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    ">
-      ← Return to Career Home
-    </button>
-  </a>
+<div class="text-center mt-auto mb-3">
+    <a href="{{ url_for('career_home') }}">
+        <button class="btn btn-primary">← Return to Career Home</button>
+    </a>
 </div>
-
 </body>
 </html>

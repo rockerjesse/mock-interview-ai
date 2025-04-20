@@ -11,7 +11,7 @@ Career Footprint is a web application designed to help users practice job interv
 
 Users can:
 - Register & Log in
-- Upload their resume
+- Upload their résumé
 - Receive an AI-generated job title guess
 - Participate in a mock interview (with AI-generated questions)
 - Get constructive feedback & a performance score
@@ -22,14 +22,14 @@ Users can:
 
 ## Tech Stack
 
-| Technology | Purpose |
-|------------|---------|
-| Python + Flask | Backend Web Framework |
-| Flask-SQLAlchemy | Database Management (SQLite) |
-| Flask-Login | User Authentication (Login/Logout) |
-| OpenAI API | AI Chat & Text-to-Speech |
-| HTML + CSS + JavaScript | Frontend Pages |
-| SQLite | Database for storing users & resumes |
+| Technology              | Purpose                              |
+|-------------------------|--------------------------------------|
+| Python + Flask          | Backend Web Framework                |
+| Flask-SQLAlchemy        | Database Management (SQLite)         |
+| Flask-Login             | User Authentication (Login/Logout)   |
+| OpenAI API              | AI Chat & Text-to-Speech             |
+| HTML + CSS + JavaScript | Frontend Pages                       |
+| SQLite                  | Database for storing users & resumes |
 
 ---
 
@@ -89,10 +89,10 @@ pip install -r requirements.txt
 
 ### 4. Create a `.env` File
 ```bash
-touch .env
+cp .env.template .env
 ```
 
-Inside `.env` add:
+Inside `.env` update:
 ```
 OPENAI_API_KEY=your_openai_api_key_here
 ```
@@ -111,16 +111,16 @@ http://localhost:5000
 
 ## Usage Guide
 
-| Feature | How It Works |
-|---------|--------------|
-| Register | Create an account with username & password. |
-| Login | Log in to access the interview tools. |
-| Upload Resume | Upload PDF, DOCX, or TXT. |
+| Feature            | How It Works                                                 |
+|--------------------|--------------------------------------------------------------|
+| Register           | Create an account with username & password.                  |
+| Login              | Log in to access the interview tools.                        |
+| Upload Resume      | Upload PDF, DOCX, or TXT.                                    |
 | AI Job Title Guess | AI will guess your likely job title based on resume content. |
-| Mock Interview | AI asks tailored questions based on your resume & job title. |
-| Feedback & Score | AI evaluates your answers & gives a score with suggestions. |
-| Text-To-Speech | Listen to your feedback using generated audio. |
-| Resumes | Resumes are tied to your account & deleted after use. |
+| Mock Interview     | AI asks tailored questions based on your resume & job title. |
+| Feedback & Score   | AI evaluates your answers & gives a score with suggestions.  |
+| Text-To-Speech     | Listen to your feedback using generated audio.               |
+| Resumes            | Resumes are tied to your account & deleted after use.        |
 
 ---
 
@@ -142,15 +142,3 @@ http://localhost:5000
 - Persistent Career Progress Tracking
 - Industry-Specific Interview Mode
 - Adaptive Learning Materials Based on User Performance
-
----
-
-## License
-
-MIT License — Free to use & modify.
-
----
-
-## Contact
-
-Built with ❤️ for learning & career development.
