@@ -1,280 +1,270 @@
-# Import necessary libraries from Flask and other tools
-from flask import Flask, render_template, request, jsonify, send_file, after_this_request, redirect, url_for, flash
-from flask_sqlalchemy import SQLAlchemy  # For database management
-from flask_login import LoginManager, login_user, logout_user, login_required, current_user  # For user login handling
-from werkzeug.utils import secure_filename  # For safely handling uploaded file names
-from werkzeug.security import generate_password_hash, check_password_hash  # For password encryption
-from dotenv import load_dotenv  # For loading environment variables from .env file
-import os  # Built-in module for file paths and operations
-import time  # For handling timestamps
+# app.py
+from flask import (
+    Flask, render_template, request, jsonify,
+    redirect, url_for, flash, after_this_request
+)
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import (
+    LoginManager, login_user, logout_user,
+    login_required, current_user
+)
+from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
+from dotenv import load_dotenv
+from datetime import datetime, timedelta
+import os, time
 
-# Load environment variables from a .env file (for sensitive data like API keys)
+# Load environment variables
 load_dotenv()
 
-# Initialize the Flask web app
+# Initialize Flask app
 app = Flask(__name__)
-
-# Secret key is used to protect sensitive data like user sessions
-# NOTE: This should be changed to something secure in production
 app.secret_key = os.getenv("SECRET_KEY")
 
-# Define absolute paths for file storage and the database
+# Ensure instance folder exists
 basedir = os.path.abspath(os.path.dirname(__file__))
-
-# Ensure the instance folder exists (for the SQLite DB)
 os.makedirs(os.path.join(basedir, 'instance'), exist_ok=True)
 
-
-# Folder where uploaded resumes will be stored temporarily
+# Configure upload folder and database
 app.config['UPLOAD_FOLDER'] = os.path.join(basedir, 'uploads')
+app.config['SQLALCHEMY_DATABASE_URI'] = (
+    f"sqlite:///{os.path.join(basedir, 'instance', 'users.db')}"
+)
 
-# Define the location of the SQLite database file
-app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(basedir, 'instance', 'users.db')}"
-
-# Import database models (User model)
-from models.user import db, User
-
-# Initialize the database with the app
+# Initialize database and models
+from models.user import db, User, InterviewHistory  # includes streak_count, last_interview_time, longest_streak :contentReference[oaicite:0]{index=0}&#8203;:contentReference[oaicite:1]{index=1}
 db.init_app(app)
 
-# Setup Flask-Login for user authentication management
+# Set up Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = "index"  # Where to redirect if a user isn't logged in
+login_manager.login_view = "index"
 
-# Import AI service modules used by the app
-from services.resume_parser import load_resume
-from services.ai_interview import (
-    guess_job_title,
-    ask_interview_question,
-    get_feedback,
-    score_answer
-)
-from services.tts_service import generate_tts_audio  # Text-to-speech service
-
-
-# This tells Flask-Login how to load a user from the database
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+# Import AI & resume services
+from services.resume_parser import load_resume
+from services.ai_interview import (
+    guess_job_title,
+    start_interview,
+    process_interview_message
+)
+from services.tts_service import generate_tts_audio
 
-# Allowed file types for resume uploads
+# Streak thresholds (1 day)
+STREAK_INCREMENT_THRESHOLD = timedelta(days=1)
+STREAK_BREAK_THRESHOLD     = timedelta(days=1)
+
+# Helpers
 ALLOWED_EXTENSIONS = {'pdf', 'docx', 'txt'}
-
-# Temporary storage for interview session data (resets per session)
-user_data = {
-    "resume_text": "",
-    "job_title": "",
-    "previous_questions": [],
-    "current_question": "",
-    "main_answer": "",
-    "stage": "initial"  # Tracks if user is answering first question, follow-up, or done
-}
-
-
-# Checks if uploaded file is allowed (based on file extension)
 def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return '.' in filename and filename.rsplit('.',1)[1].lower() in ALLOWED_EXTENSIONS
 
-
-# Deletes old uploaded files to save space (files older than 10 minutes by default)
 def delete_old_files(folder, max_age_seconds=600):
     now = time.time()
-    for filename in os.listdir(folder):
-        path = os.path.join(folder, filename)
+    for fname in os.listdir(folder):
+        path = os.path.join(folder, fname)
         if os.path.isfile(path) and now - os.path.getmtime(path) > max_age_seconds:
-            try:
-                os.remove(path)
-            except Exception as e:
-                app.logger.error(f"Failed to delete {path}: {e}")
+            try: os.remove(path)
+            except: pass
 
+# ------------------- ROUTES -------------------
 
-# ------------------- ROUTES (App Pages) ------------------------
-
-# Home page
 @app.route("/", methods=["GET"])
 def index():
+    if current_user.is_authenticated:
+        return redirect(url_for("career_home"))
     return render_template("index.html")
 
-
-# Login page
-@app.route("/login", methods=["GET", "POST"])
+@app.route("/login", methods=["GET","POST"])
 def login():
-    if request.method == "POST":
+    if request.method=="POST":
         username = request.form["username"]
         password = request.form["password"]
-
         user = User.query.filter_by(username=username).first()
-
-        # Check if user exists and password is correct
         if user and check_password_hash(user.password, password):
             login_user(user)
             return redirect(url_for("career_home"))
-        else:
-            flash("Login failed. Please check your username and password.")
-            return redirect(url_for("login"))
-
+        flash("Login failed. Please check your credentials.")
+        return redirect(url_for("login"))
     return render_template("login.html")
 
-
-# Registration page (create new user)
-@app.route("/register", methods=["GET", "POST"])
+@app.route("/register", methods=["GET","POST"])
 def register():
-    if request.method == "POST":
+    if request.method=="POST":
         username = request.form["username"]
         password = request.form["password"]
-
-        # Check if user already exists
-        existing_user = User.query.filter_by(username=username).first()
-        if existing_user:
+        if User.query.filter_by(username=username).first():
             flash("Username already exists.")
             return redirect(url_for("register"))
-
-        # Hash the password for security
-        hashed_pw = generate_password_hash(password)
-        new_user = User(username=username, password=hashed_pw)
+        new_user = User(username=username, password=generate_password_hash(password))
         db.session.add(new_user)
         db.session.commit()
-
-        # Automatically log in the new user
         login_user(new_user)
         return redirect(url_for("career_home"))
-
     return render_template("register.html")
 
-
-# Log out the current user
 @app.route("/logout")
 @login_required
 def logout():
     logout_user()
-    flash('You have been logged out.')
-    return redirect(url_for('index'))
+    flash("You have been logged out.")
+    return redirect(url_for("index"))
 
-
-# Main career planner home page (after login)
 @app.route("/career_home")
 @login_required
 def career_home():
-    return render_template("career_home.html")
+    # 1) Load interview history (newest first)
+    history_desc = current_user.interviews.order_by(
+        InterviewHistory.created_at.desc()
+    ).all()
 
+    # 2) Prepare chart data (oldest→newest)
+    history_asc = list(reversed(history_desc))
+    labels = [h.created_at.strftime("%Y-%m-%d %H:%M") for h in history_asc]
+    scores = [h.score for h in history_asc]
 
-# Interview page (AI Interview happens here)
+    # 3) Basic stats
+    total_interviews = len(history_desc)
+    current_streak   = current_user.streak_count or 0
+    longest_streak   = current_user.longest_streak or 0
+    highest_score    = max((h.score for h in history_desc), default=0)
+
+    # 4) Compute score‑runs
+    runs = {}
+    seq = history_asc
+    for min_score, run_len in [(5,5), (6,10), (7,20), (8,50)]:
+        max_run = cur = 0
+        for h in seq:
+            if h.score >= min_score:
+                cur += 1
+                max_run = max(max_run, cur)
+            else:
+                cur = 0
+        runs[(min_score, run_len)] = (max_run >= run_len)
+
+    # 5) Define all badge conditions (in order)
+    badge_defs = [
+        # interview count
+        (total_interviews >= 1,   "First Interview",   "🥇"),
+        (total_interviews >= 5,   "5 Interviews",      "🥈"),
+        (total_interviews >= 20,  "20 Interviews",     "🥉"),
+        (total_interviews >= 100, "100 Interviews",    "🏆"),
+        # streak count
+        (current_streak >= 1,    "1‑Day Streak",   "🔥"),
+        (current_streak >= 5,    "5‑Day Streak",   "🔥🔥"),
+        (current_streak >= 20,   "20‑Day Streak",  "🔥🔥🔥"),
+        (current_streak >= 100,  "100‑Day Streak", "🔥🔥🔥🔥"),
+        # first‑time high scores
+        (highest_score >= 5,  "First 5+ Score",  "⭐"),
+        (highest_score >= 7,  "First 7+ Score",  "🌟"),
+        (highest_score >= 9,  "First 9+ Score",  "✨"),
+        (highest_score >= 10, "Perfect Score",    "💯"),
+        # consecutive score‑runs
+        (runs[(5,5)],   "Run of 5×≥5",   "🏁"),
+        (runs[(6,10)],  "Run of 10×≥6",  "🏅"),
+        (runs[(7,20)],  "Run of 20×≥7",  "🎖️"),
+        (runs[(8,50)],  "Run of 50×≥8",  "🏆"),
+    ]
+
+    # 6) Build list of all badges with earned flag
+    potential_badges = [
+        {"name": name, "icon": icon, "earned": cond}
+        for cond, name, icon in badge_defs
+    ]
+
+    return render_template(
+        "career_home.html",
+        interviews=history_desc,
+        labels=labels,
+        scores=scores,
+        streak=current_streak,
+        longest=longest_streak,
+        potential_badges=potential_badges
+    )
+
 @app.route("/interview")
 @login_required
 def interview():
     return render_template("interview.html")
 
-
-# Upload resume route (called when user uploads a resume)
 @app.route("/upload", methods=["POST"])
 @login_required
 def upload():
-    # Clean up old files
     delete_old_files(app.config['UPLOAD_FOLDER'])
-
     resume_text = ""
     if "resume" in request.files:
         file = request.files["resume"]
         if not allowed_file(file.filename):
             return jsonify({"error": "Invalid file type"}), 400
-        filename = secure_filename(file.filename)
-        path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        fn   = secure_filename(file.filename)
+        path = os.path.join(app.config['UPLOAD_FOLDER'], fn)
         file.save(path)
-
-        # Delete the uploaded file after it's used
         @after_this_request
-        def remove_file(response):
-            try:
-                os.remove(path)
-            except Exception as e:
-                app.logger.error(f"Failed to delete {path}: {e}")
-            return response
-
-        # Extract resume text using AI services
+        def rm(r):
+            try: os.remove(path)
+            except: pass
+            return r
         resume_text = load_resume(path)
     elif "resume_text" in request.form:
         resume_text = request.form["resume_text"]
 
     if not resume_text:
         return jsonify({"error": "No resume text found"}), 400
-    job_title = guess_job_title(resume_text)
-    question = ask_interview_question(resume_text, job_title, [])
 
-    # Save interview data for this session
-    user_data.update({
-        "resume_text": resume_text,
-        "job_title": job_title,
-        "previous_questions": [question],
-        "current_question": question,
-        "main_answer": "",
-        "stage": "initial"
+    job_title      = guess_job_title(resume_text)
+    first_question = start_interview(resume_text, job_title)
+    formatted      = f"<br><br><strong>Interview Question:</strong><br>{first_question}"
+
+    return jsonify({
+        "job_title":   job_title,
+        "question":    formatted,
+        "resume_text": resume_text
     })
 
-    # Return question to frontend
-    formatted_question = f"<br><br><strong>Interview Question:</strong><br>{question}"
-    return jsonify({"job_title": job_title, "question": formatted_question, "resume_text": resume_text})
-
-
-# Chat route - Handles messages from user during interview
 @app.route("/chat", methods=["POST"])
 @login_required
 def chat():
-    message = request.json["message"]
-    resume_text = user_data["resume_text"]
-    job_title = user_data["job_title"]
-    stage = user_data["stage"]
+    msg    = request.json.get("message", "")
+    result = process_interview_message(msg)
 
-    # First answer stage
-    if stage == "initial":
-        user_data["main_answer"] = message
+    if result.get("score") is not None:
+        hist = InterviewHistory(
+            user_id   = current_user.id,
+            job_title = result["job_title"],
+            score     = result["score"]
+        )
+        db.session.add(hist)
 
-        followup_q = ask_interview_question(resume_text, job_title, user_data["previous_questions"])
+        now, last = datetime.utcnow(), current_user.last_interview_time
+        if last is None:
+            current_user.streak_count = 1
+        else:
+            delta = now - last
+            if delta > STREAK_BREAK_THRESHOLD:
+                current_user.streak_count = 1
+            elif delta >= STREAK_INCREMENT_THRESHOLD:
+                current_user.streak_count += 1
 
-        user_data["stage"] = "followup"
-        user_data["current_question"] = followup_q
-        user_data["previous_questions"].append(followup_q)
+        if current_user.streak_count > current_user.longest_streak:
+            current_user.longest_streak = current_user.streak_count
 
-        return jsonify({"feedback": f"<strong>Follow-up Question:</strong><br>{followup_q}"})
+        current_user.last_interview_time = now
+        db.session.commit()
 
-    # Follow-up answer stage
-    elif stage == "followup":
-        full_answer = f"{user_data['main_answer']}\n\nFollow-up Answer:\n{message}"
-        combined_questions = "\n\n".join(user_data["previous_questions"])
+    return jsonify(result)
 
-        feedback = get_feedback(combined_questions, full_answer, resume_text, job_title)
-        score, breakdown = score_answer(combined_questions, full_answer, resume_text, job_title)
-
-        user_data["stage"] = "done"
-
-        return jsonify({
-            "feedback": f"{feedback}<br><br><strong>Total Score:</strong> {score}/10<br><br><strong>Score Breakdown:</strong><br>{breakdown.replace(chr(10), '<br><br>')}"
-        })
-
-    # Interview is done
-    else:
-        return jsonify({
-            "feedback": "Interview complete. Refresh the page to try another resume."
-        })
-
-
-# Text-to-speech route - Converts text to audio
 @app.route("/speak", methods=["POST"])
 @login_required
 def speak():
     text = request.json.get("text")
     if not text:
         return jsonify({"error": "No text provided"}), 400
-
     return generate_tts_audio(text)
 
-
-# Run the app (only when directly running this file)
 if __name__ == "__main__":
-    # Create database tables if they don't exist
     with app.app_context():
         db.create_all()
-
-    # Start Flask web server
     app.run(debug=True, host="0.0.0.0", port=5000)

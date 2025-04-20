@@ -1,23 +1,14 @@
-# Import OpenAI library to interact with their AI models
 import openai
-
-# Import modules for environment variables and file handling
 import os
-from dotenv import load_dotenv  # Loads sensitive API keys from .env file
+from dotenv import load_dotenv
 
-# Load environment variables (like your API key)
+# Load env vars & init client
 load_dotenv()
-
-# Create an OpenAI client instance using your API key from the .env file
 client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+# ---------------------- AI Utilities ----------------------
 
-# ---------------------- AI Function 1 ----------------------
-
-# Guess a Job Title based on the user's resume text
-def guess_job_title(resume_text: str):
-    # Create a prompt that tells the AI its role and task
-    # The AI will act like a career analyst and guess a realistic job title
+def guess_job_title(resume_text: str) -> str:
     prompt = f"""
 You are a professional career analyst.
 
@@ -27,24 +18,18 @@ Be specific but realistic. Return only the job title.
 --- Resume ---
 {resume_text}
 """
-
-    # Send the prompt to OpenAI's chat model
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[{"role": "system", "content": prompt}],
-        temperature=0.5  # Controls creativity (lower = more accurate)
+        temperature=0.5
     )
-
-    # Extract and return the generated job title from the response
     return response.choices[0].message.content.strip()
 
-
-# ---------------------- AI Function 2 ----------------------
-
-# Ask a custom interview question based on the resume and job title
-def ask_interview_question(resume_text: str, job_title: str, previous_questions: list[str]):
-    # Prompt the AI to act like a recruiter conducting a mock interview
-    # It avoids repeating any previous questions asked
+def ask_interview_question(
+    resume_text: str,
+    job_title: str,
+    previous_questions: list[str]
+) -> str:
     prompt = f"""
 You are a professional recruiter conducting a mock interview for the position of {job_title}.
 
@@ -56,23 +41,19 @@ Avoid repeating these previous questions:
 --- Resume ---
 {resume_text}
 """
-
-    # Send the prompt to OpenAI's chat model
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[{"role": "system", "content": prompt}],
-        temperature=0.7  # More creative to vary the questions
+        temperature=0.7
     )
-
-    # Extract and return the generated interview question
     return response.choices[0].message.content.strip()
 
-
-# ---------------------- AI Function 3 ----------------------
-
-# Provide feedback on the candidate's interview answer
-def get_feedback(questions: str, answer: str, resume_text: str, job_title: str):
-    # Prompt the AI to act like an expert interview coach
+def get_feedback(
+    questions: str,
+    answer: str,
+    resume_text: str,
+    job_title: str
+) -> str:
     prompt = f"""
 You are an expert interview coach.
 
@@ -92,23 +73,19 @@ Focus only on the quality of their answer. Do not comment on their resume unless
 
 Return your feedback using clear bullet points.
 """
-
-    # Send the prompt to OpenAI's chat model
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[{"role": "system", "content": prompt}],
-        temperature=0.7  # Slightly creative for natural feedback
+        temperature=0.7
     )
-
-    # Return the generated feedback
     return response.choices[0].message.content.strip()
 
-
-# ---------------------- AI Function 4 ----------------------
-
-# Score the candidate's answer on a scale of 1-10
-def score_answer(questions: str, answer: str, resume_text: str, job_title: str):
-    # Prompt the AI to act like a professional recruiter grading the interview
+def score_answer(
+    questions: str,
+    answer: str,
+    resume_text: str,
+    job_title: str
+) -> tuple[int, str]:
     prompt = f"""
 You are a professional recruiter evaluating a candidate's interview performance for the role of {job_title}.
 
@@ -143,31 +120,81 @@ Breakdown:
 - Problem-Solving & Critical Thinking: ...
 - Experience & Resume Alignment: ...
 """
-
-    # Send the prompt to OpenAI's chat model
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[{"role": "system", "content": prompt}],
         temperature=0.7
     )
-
-    # Get the full response text from the AI
-    full_text = response.choices[0].message.content.strip()
-
-    # Split the response into lines for easier parsing
-    lines = full_text.splitlines()
-
-    # Look for the line that starts with "Score:" to extract the score value
-    score_line = next((line for line in lines if line.lower().startswith("score:")), "Score: 0")
-
-    # Extract the score number from that line
+    lines = response.choices[0].message.content.strip().splitlines()
+    score_line = next((l for l in lines if l.lower().startswith("score:")), "Score: 0")
     try:
         score = int(score_line.split(":")[1].strip())
     except:
-        score = 0  # Fallback if parsing fails
-
-    # Create the breakdown text by joining all lines that aren't the score line
-    breakdown = "\n".join(line for line in lines if not line.lower().startswith("score:"))
-
-    # Return both the numerical score and the detailed breakdown
+        score = 0
+    breakdown = "\n".join(l for l in lines if not l.lower().startswith("score:"))
     return score, breakdown
+
+# ---------------------- Interview Session Handling ----------------------
+
+user_data = {
+    "resume_text": "",
+    "job_title": "",
+    "previous_questions": [],
+    "current_question": "",
+    "main_answer": "",
+    "stage": "initial"
+}
+
+def start_interview(resume_text: str, job_title: str) -> str:
+    """
+    Initialize a new interview session and return the first question.
+    """
+    user_data.update({
+        "resume_text": resume_text,
+        "job_title": job_title,
+        "previous_questions": [],
+        "current_question": "",
+        "main_answer": "",
+        "stage": "initial"
+    })
+    first_q = ask_interview_question(resume_text, job_title, [])
+    user_data["previous_questions"] = [first_q]
+    user_data["current_question"]  = first_q
+    return first_q
+
+def process_interview_message(message: str) -> dict:
+    """
+    Advance the interview based on the incoming user message.
+    Returns a dict ready for jsonify(), including job_title and score.
+    """
+    rt    = user_data["resume_text"]
+    jt    = user_data["job_title"]
+    stage = user_data["stage"]
+
+    if stage == "initial":
+        user_data["main_answer"] = message
+        followup = ask_interview_question(rt, jt, user_data["previous_questions"])
+        user_data["stage"]             = "followup"
+        user_data["current_question"]  = followup
+        user_data["previous_questions"].append(followup)
+        return {"feedback": f"<strong>Follow‑up Question:</strong><br>{followup}"}
+
+    elif stage == "followup":
+        full_ans  = f"{user_data['main_answer']}\n\nFollow‑up Answer:\n{message}"
+        combo_q   = "\n\n".join(user_data["previous_questions"])
+        fb        = get_feedback(combo_q, full_ans, rt, jt)
+        score, breakdown = score_answer(combo_q, full_ans, rt, jt)
+        user_data["stage"] = "done"
+        return {
+            "feedback": (
+                f"{fb}<br><br>"
+                f"<strong>Total Score:</strong> {score}/10<br><br>"
+                f"<strong>Score Breakdown:</strong><br>"
+                f"{breakdown.replace(chr(10), '<br><br>')}"
+            ),
+            "job_title": jt,
+            "score":     score
+        }
+
+    else:
+        return {"feedback": "Interview complete. Refresh the page to try another resume."}
