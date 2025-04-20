@@ -252,7 +252,7 @@ def chat():
         db.session.commit()
 
     return jsonify(result)
-
+#updates
 @app.route("/speak", methods=["POST"])
 @login_required
 def speak():
