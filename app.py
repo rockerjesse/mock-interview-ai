@@ -29,6 +29,7 @@ os.makedirs(os.path.join(basedir, "instance"), exist_ok=True)
 
 # Config
 app.config["UPLOAD_FOLDER"] = os.path.join(basedir, "uploads")
+os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 app.config["SQLALCHEMY_DATABASE_URI"] = (
     f"sqlite:///{os.path.join(basedir, 'instance', 'users.db')}"
 )
@@ -70,6 +71,8 @@ def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def delete_old_files(folder, max_age_seconds=600):
+    if not os.path.isdir(folder):
+        return
     now = time.time()
     for fname in os.listdir(folder):
         path = os.path.join(folder, fname)
