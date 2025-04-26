@@ -95,6 +95,7 @@ cp .env.template .env
 Inside `.env` update:
 ```
 OPENAI_API_KEY=your_openai_api_key_here
+SECRET_KEY=your_32-character_hexadecimal_string_here
 ```
 
 ---
@@ -126,11 +127,14 @@ http://localhost:5000
 
 ## Developer Notes
 
-- All sensitive data (API keys) should go in `.env`.
+- All sensitive data (API keys, secret keys) should go in `.env`.
+- Generate a new secure key again using print(secrets.token_hex(16)) and place it in the .env
+- Load the API keys/secret keys from the .env for environmental variables rather than hardcoding it
 - This project uses temporary file storage for uploads to avoid storing user data long-term.
 - SQLite is used for easy local development.
 - OpenAI's GPT-3.5 powers the interview AI and feedback system.
 - Text-to-Speech is provided using OpenAI's TTS service.
+
 
 ---
 
