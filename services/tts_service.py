@@ -1,49 +1,45 @@
-# Import the OpenAI library to interact with their AI services
+# Import the OpenAI library so we can use their AI services like text-to-speech
 import openai
 
-# Import built-in modules for creating temporary files and working with the file system
-import tempfile
-import os
+# Import Python’s built-in modules for temporary files and file system tools
+import tempfile  # Lets us create temporary files
+import os  # Used for working with file paths and environment variables
 
-# Import environment variable loader
+# Import the function to load environment variables from a .env file
 from dotenv import load_dotenv
 
-# Import Flask's send_file function to send audio files back to the user
+# Import a Flask tool that lets us send files (like audio) to the browser
 from flask import send_file
 
-# Load environment variables from the .env file
-# This lets us safely store sensitive information like API keys outside of our code
+# Load environment variables (like our secret API key) from a .env file
 load_dotenv()
 
-# Initialize the OpenAI client using the API key loaded from the .env file
+# Create a client to connect to OpenAI using the API key we loaded
 client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
 # ------------------ Text-to-Speech Function ---------------------
 
-# This function generates speech audio from text input using OpenAI's TTS (Text-To-Speech) service
+# This function takes some text and returns an audio file that says the text out loud
 def generate_tts_audio(text: str):
-    # Create a temporary .mp3 file to store the generated audio
-    # tempfile.NamedTemporaryFile() creates a temporary file we can write to
-    # delete=False means we will delete the file manually later
+    # Create a temporary .mp3 file where the AI-generated voice will be saved
+    # This file is stored temporarily and will be deleted later
     with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as temp_audio:
-        # Call the OpenAI API to generate speech audio
-        # model="tts-1" is the specific Text-To-Speech model we're using
-        # voice="nova" is a specific voice option provided by OpenAI
-        # input=text is the text the AI will turn into speech
+        # Ask OpenAI to turn the input text into speech using their text-to-speech model
+        # 'tts-1' is the model, 'nova' is the voice type, and 'text' is what the AI should say
         response = client.audio.speech.create(
             model="tts-1",
             voice="nova",
             input=text
         )
 
-        # Stream the generated audio directly into the temporary file we created
+        # Write the generated audio into our temporary .mp3 file
         response.stream_to_file(temp_audio.name)
 
-    # Once the audio is generated, send the file back to the user
-    # Flask's send_file() function makes this easy
+    # Send the audio file back to the user's web browser using Flask
+    # This allows the user to hear the generated voice
     return send_file(
-        temp_audio.name,  # Path to the generated audio file
-        mimetype="audio/mpeg",  # Tell the browser it's an audio file
-        as_attachment=False  # Play directly in the browser instead of downloading
+        temp_audio.name,  # The path to the temporary audio file
+        mimetype="audio/mpeg",  # Tell the browser it’s an audio file
+        as_attachment=False  # This tells the browser to play it instead of downloading it
     )

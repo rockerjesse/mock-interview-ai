@@ -1,53 +1,70 @@
-<!DOCTYPE html>
-<html lang="en">
+<!-- This is the landing page (home screen) for users who are not logged in yet -->
+<!DOCTYPE html> <!-- Tells the browser this is an HTML5 document -->
+<html lang="en"> <!-- Start of the HTML document, with English as the language -->
+
 <head>
+    <!-- The title that appears in the browser tab -->
     <title>Career Footprint - Welcome</title>
+
+    <!-- Internal CSS to style the page -->
     <style>
+        /* Style for the entire page body */
         body {
-            background-color: #121212;
-            color: #e0e0e0;
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
+            background-color: #121212;         /* Dark background */
+            color: #e0e0e0;                    /* Light text */
+            font-family: Arial, sans-serif;    /* Use Arial font */
+            display: flex;                     /* Use flexbox layout */
+            flex-direction: column;            /* Stack elements vertically */
+            align-items: center;               /* Center items horizontally */
+            justify-content: center;           /* Center items vertically */
+            min-height: 100vh;                 /* Take up full screen height */
             text-align: center;
             padding: 2rem;
         }
 
+        /* Style for the main heading */
         h1 {
-            color: #1976d2;
+            color: #1976d2;                    /* Bright blue text */
             margin-bottom: 1rem;
         }
 
+        /* Style for the short description paragraph */
         p {
-            color: #aaa;
-            max-width: 500px;
+            color: #aaa;                       /* Light gray text */
+            max-width: 500px;                  /* Keep paragraph from stretching too wide */
             margin-bottom: 2rem;
         }
 
+        /* Style for both the Login and Create Account buttons */
         a.button {
-            background-color: #1976d2;
-            color: white;
-            padding: 0.8rem 2rem;
-            text-decoration: none;
-            border-radius: 8px;
+            background-color: #1976d2;         /* Blue background */
+            color: white;                      /* White text */
+            padding: 0.8rem 2rem;              /* Space inside the button */
+            text-decoration: none;             /* No underline */
+            border-radius: 8px;                /* Rounded corners */
             font-size: 1.1rem;
-            margin: 0.5rem;
+            margin: 0.5rem;                    /* Space around the button */
             display: inline-block;
         }
 
+        /* Button style when hovered over with the mouse */
         a.button:hover {
-            background-color: #1565c0;
+            background-color: #1565c0;         /* Slightly darker blue */
         }
     </style>
 </head>
+
 <body>
+    <!-- Page title -->
     <h1>🚀 Career Footprint</h1>
+
+    <!-- Tagline or short description -->
     <p>Your AI-powered career management platform.</p>
 
+    <!-- Link to the login page styled as a button -->
     <a href="/login" class="button">Login</a>
+
+    <!-- Link to the registration page styled as a button -->
     <a href="/register" class="button">Create Account</a>
 </body>
 </html>
