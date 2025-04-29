@@ -1,61 +1,69 @@
 # Import built-in modules for file handling
-import os  # For working with file paths and extensions
+import os  # This helps us work with file paths and file extensions
 
-# Import libraries to read different document types
-import pdfplumber  # For extracting text from PDF files
-import docx        # For extracting text from Word (.docx) files
+# Import external libraries that can read different types of resume documents
+import pdfplumber  # Used to extract text from PDF files
+import docx        # Used to extract text from Word (.docx) files
 
 
-# Main function that loads and reads a resume file
-# Accepts a file path and returns the extracted text from the file
+# ---------------------- MAIN FUNCTION ----------------------
+
+# This is the main function that handles resume reading.
+# It accepts the file path of a resume and returns the text content.
 def load_resume(path="resume.pdf"):
-    # Split the file name and extension
+    # Split the file path into the name and extension (like ".pdf")
     _, ext = os.path.splitext(path)
 
-    # Convert the extension to lowercase for consistency
+    # Convert the extension to lowercase (so ".PDF" and ".pdf" are treated the same)
     ext = ext.lower()
 
-    # Determine which function to use based on file type
+    # Choose the correct text-extraction function based on file type
     if ext == ".pdf":
-        return load_pdf(path)
+        return load_pdf(path)       # Call the PDF reader if it's a PDF
     elif ext == ".docx":
-        return load_docx(path)
+        return load_docx(path)      # Call the Word reader if it's a DOCX
     elif ext == ".txt":
-        return load_txt(path)
+        return load_txt(path)       # Call the text reader if it's a plain text file
     else:
-        # If the file is not a supported type, raise an error
+        # If the file is not one of the supported types, show an error
         raise ValueError("Unsupported resume format. Use .pdf, .docx, or .txt")
 
 
-# Function to extract text from PDF files
-def load_pdf(path: str):
-    text = ""  # Create an empty string to store the extracted text
+# ---------------------- PDF PARSER ----------------------
 
-    # Open the PDF file
+# This function handles reading a PDF file
+def load_pdf(path: str):
+    text = ""  # Start with an empty string to collect text
+
+    # Open the PDF file using pdfplumber
     with pdfplumber.open(path) as pdf:
-        # Loop through each page of the PDF
+        # Loop through each page in the PDF
         for page in pdf.pages:
-            # Extract text from the page
-            # If nothing is found, add an empty string
+            # Extract text from the current page
+            # If no text is found, add an empty string instead
             text += page.extract_text() or ""
 
-    # Remove extra whitespace from the start and end of the text
+    # Remove any extra spaces from the beginning and end
     return text.strip()
 
 
-# Function to extract text from Word (.docx) files
+# ---------------------- DOCX PARSER ----------------------
+
+# This function handles reading Word (.docx) files
 def load_docx(path: str):
-    # Open the Word document
+    # Open the Word document using the python-docx library
     doc = docx.Document(path)
 
-    # Loop through each paragraph in the document
-    # Extract the text from each paragraph and join them with a newline
+    # Loop through every paragraph in the document
+    # Extract text from each one and join them with a newline
     return "\n".join([para.text for para in doc.paragraphs]).strip()
 
 
-# Function to read plain text (.txt) files
+# ---------------------- TXT PARSER ----------------------
+
+# This function handles reading plain text (.txt) files
 def load_txt(path: str):
-    # Open the text file in read mode with UTF-8 encoding
+    # Open the file in read mode using UTF-8 encoding (for most characters)
     with open(path, "r", encoding="utf-8") as file:
-        # Read the entire file content and remove extra whitespace
+        # Read the entire file into a string, then strip off extra whitespace
         return file.read().strip()

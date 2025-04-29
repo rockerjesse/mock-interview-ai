@@ -1,29 +1,38 @@
-<!-- templates/career_home.html -->
+<!-- This is the main homepage for logged-in users -->
+<!-- File: templates/career_home.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <title>Career Footprint – Home</title>
+
+  <!-- Styling for the whole page using internal CSS -->
   <style>
+    /* Base page styles */
     body {
-      background: #121212;
-      color: #e0e0e0;
+      background: #121212;          /* Dark background */
+      color: #e0e0e0;               /* Light text */
       font-family: Arial, sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
       padding: 2rem;
-      min-height: 100vh;
+      min-height: 100vh;            /* Full height screen */
     }
+
     h1, h2 {
-      color: #1976d2;
+      color: #1976d2;               /* Blue headers */
       margin: 1rem 0;
     }
+
+    /* Logout button styling */
     .logout-btn {
       position: absolute;
       top: 1rem;
       right: 1rem;
     }
+
+    /* All buttons share this style */
     .btn {
       padding: 0.7rem 1.5rem;
       margin: 0.5rem;
@@ -34,9 +43,12 @@
       text-decoration: none;
       cursor: pointer;
     }
+
     .btn:hover {
       background: #1565c0;
     }
+
+    /* Banner showing streak info */
     .streak-banner {
       background: #263238;
       color: #a5d6a7;
@@ -48,7 +60,7 @@
       margin-top: 1rem;
     }
 
-    /* Side‑by‑side layout for chart+table vs. badges */
+    /* Layout container: chart + badges side-by-side */
     #visualization {
       display: flex;
       gap: 2rem;
@@ -57,54 +69,61 @@
       margin-top: 2rem;
       align-items: flex-start;
     }
+
+    /* Chart and badges sections take equal space */
     #chart-section, #badges {
       flex: 1 1 300px;
     }
+
     #chart-section {
       min-width: 300px;
     }
 
-    /* Chart styling */
     #chart-container {
       background: #1e1e1e;
       padding: 1rem;
       border-radius: 6px;
     }
 
-    /* Interview log table under chart */
+    /* Table under the chart */
     #interview-log {
       width: 100%;
       margin-top: 1.5rem;
       border-collapse: collapse;
       color: #e0e0e0;
     }
+
     #interview-log th, #interview-log td {
       padding: 0.5rem;
       border-bottom: 1px solid #333;
       text-align: left;
     }
 
-    /* Badges grid */
+    /* Grid layout for badges */
     #badges {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
       gap: 1rem;
     }
+
     .badge {
       background: #1e1e1e;
       padding: 0.8rem;
       border-radius: 6px;
       text-align: center;
-      opacity: 0.3;
+      opacity: 0.3;                /* Faded look for unearned badges */
       transition: opacity 0.3s;
     }
+
     .badge.earned {
-      opacity: 1;
-      background: #2e7d32;
+      opacity: 1;                  /* Full brightness for earned badges */
+      background: #2e7d32;         /* Green background for earned */
     }
+
     .badge-icon {
       font-size: 2rem;
     }
+
     .badge-name {
       margin-top: 0.5rem;
       font-size: 0.9rem;
@@ -113,40 +132,48 @@
     a {
       color: #1976d2;
     }
+
     a:hover {
       text-decoration: underline;
     }
   </style>
+
+  <!-- Load Chart.js library for graphs -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
 
-  <!-- Logout -->
+  <!-- Logout button links to the Flask route for logging out -->
   <a href="{{ url_for('logout') }}">
     <button class="btn logout-btn">Logout</button>
   </a>
 
+  <!-- Greeting with the current user’s username -->
   <h1>Welcome, {{ current_user.username }}!</h1>
   <p>Your AI-powered career home base.</p>
 
+  <!-- Button to launch the interview page -->
   <a href="{{ url_for('interview') }}" class="btn">Launch AI Interview</a>
 
-  <!-- Streak banner -->
+  <!-- Show the user's current streak and longest streak -->
   <div class="streak-banner">
     🔥 Current streak: <strong>{{ streak }}</strong> day{{ 's' if streak != 1 else '' }}
     &nbsp;|&nbsp;
     🏆 Longest streak: <strong>{{ longest }}</strong> day{{ 's' if longest != 1 else '' }}
   </div>
 
-  <!-- Chart + Table on left, Badges on right -->
+  <!-- Main visual area: left side = graph + log, right side = badges -->
   <div id="visualization">
+
+    <!-- Left side: chart and table -->
     <div id="chart-section">
       <h2>Interview History</h2>
       <div id="chart-container">
-        <canvas id="scoreChart"></canvas>
+        <canvas id="scoreChart"></canvas> <!-- Where the line graph will appear -->
       </div>
 
-      <!-- Interview log under the chart -->
+      <!-- Table of all past interviews -->
       <table id="interview-log">
         <thead>
           <tr>
@@ -156,6 +183,7 @@
           </tr>
         </thead>
         <tbody>
+          <!-- Loop through all interview history and create a row for each -->
           {% for h in interviews %}
           <tr>
             <td>{{ h.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
@@ -167,8 +195,9 @@
       </table>
     </div>
 
-    <!-- Badges -->
+    <!-- Right side: badge progress grid -->
     <div id="badges">
+      <!-- Loop through all possible badges and show them -->
       {% for b in potential_badges %}
       <div class="badge {% if b.earned %}earned{% endif %}">
         <div class="badge-icon">{{ b.icon }}</div>
@@ -178,21 +207,24 @@
     </div>
   </div>
 
+  <!-- JavaScript to create the line chart -->
   <script>
-    // Chart.js
+    // Grab the interview dates and scores from Python (converted to JSON)
     const labels = {{ labels|tojson }};
     const data   = {{ scores|tojson }};
+
+    // Use Chart.js to make a line graph
     new Chart(
-      document.getElementById('scoreChart'),
+      document.getElementById('scoreChart'),  // Target the canvas element
       {
-        type: 'line',
+        type: 'line',  // Line graph
         data: {
-          labels: labels,
+          labels: labels,  // X-axis (interview dates)
           datasets: [{
-            label: 'Interview Score',
-            data: data,
-            fill: false,
-            tension: 0.2,
+            label: 'Interview Score',  // Name of the data line
+            data: data,                // Y-axis (scores)
+            fill: false,              // Don’t fill under the line
+            tension: 0.2,             // Slight curve to the line
             pointRadius: 5,
             pointHoverRadius: 7
           }]
@@ -209,10 +241,10 @@
             }
           },
           plugins: {
-            legend: { display: false },
+            legend: { display: false },  // Hide the legend (only one dataset)
             tooltip: {
               callbacks: {
-                label: ctx => `Score: ${ctx.parsed.y}/10`
+                label: ctx => `Score: ${ctx.parsed.y}/10`  // Custom tooltip
               }
             }
           }
